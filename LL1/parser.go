@@ -47,6 +47,44 @@ func (p Parser) IsNonTerm(symbol string) bool {
 	return p.nonTerms.Has(symbol)
 }
 
+// Parse returns rules for left-most derivation of input
+func (p Parser) Parse(input []string) [][]string {
+	input = append(input, "$")
+	derivation := [][]string{}
+	stack := []string{"$", p.start}
+	table := p.ParseTable()
+	pos := 0
+abort:
+	for len(stack) > 0 {
+		s := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		sym := input[pos]
+		switch {
+		case p.IsTerm(s) || s == "$":
+			if s == sym {
+				pos += 1
+				if sym == "$" {
+					// input accepted
+				}
+			} else {
+				panic("Bad symbol: " + sym)
+				break abort
+			}
+		case p.IsNonTerm(s):
+			rule := table[s][sym]
+			for i := len(rule) - 1; i >= 0; i-- {
+				stack = append(stack, rule[i])
+			}
+
+			d := []string{s}
+			d = append(d, rule...)
+			derivation = append(derivation, d)
+		}
+	}
+
+	return derivation
+}
+
 func (p Parser) ParseTable() map[string]map[string][]string {
 	// map[non-term][term] = segment (rule)
 	table := map[string]map[string][]string{}

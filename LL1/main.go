@@ -16,17 +16,14 @@ func main() {
 			"E": []string{"e", "|", "ε"},
 		}
 	*/
-	terms := []string{"+", "*", "id", "(", ")"}
-	nonTerms := []string{"E", "E'", "T", "T'", "F"}
-	start := "E"
+	terms := []string{"a", "+", "(", ")"}
+	nonTerms := []string{"S", "F"}
+	start := "S"
 	rules := map[string][]string{
-		"E":  []string{"T", "E'"},
-		"E'": []string{"+", "T", "E'", "|", "ε"},
-		"T":  []string{"F", "T'"},
-		"T'": []string{"*", "F", "T'", "|", "ε"},
-		"F":  []string{"id", "|", "(", "E", ")"},
+		"S": []string{"F", "|", "(", "S", "+", "F", ")"},
+		"F": []string{"a"},
 	}
 
 	p := NewParser(terms, nonTerms, start, rules)
-	fmt.Println(p.ParseTable())
+	fmt.Println(p.Parse([]string{"(", "a", "+", "a", ")"}))
 }
