@@ -13,6 +13,14 @@ func NewSet(elems []string) *Set {
 	return &s
 }
 
+func (s *Set) List() (l []string) {
+	for e := range s.m {
+		l = append(l, e)
+	}
+
+	return l
+}
+
 func (s *Set) Add(ele string) {
 	(*s).m[ele] = struct{}{}
 }

@@ -47,6 +47,37 @@ func (p Parser) IsNonTerm(symbol string) bool {
 	return p.nonTerms.Has(symbol)
 }
 
+func (p Parser) ParseTable() map[string]map[string][]string {
+	// map[non-term][term] = segment (rule)
+	table := map[string]map[string][]string{}
+
+	for lhs, segs := range p.rules {
+		for _, seg := range segs {
+			set := *NewSet([]string{})
+			if seg[0] == Epsilon {
+				set = p.follow(lhs)
+			} else {
+				tmp := [][]string{}
+				tmp = append(tmp, seg)
+				set = p.first(tmp)
+			}
+
+			for _, sym := range set.List() {
+				if _, ok := table[lhs]; ok {
+					m := table[lhs]
+					m[sym] = seg
+					table[lhs] = m
+				} else {
+					table[lhs] = make(map[string][]string)
+					table[lhs][sym] = seg
+				}
+			}
+		}
+	}
+
+	return table
+}
+
 func (p Parser) FirstAll() map[string]Set {
 	f := map[string]Set{}
 	for nt, segs := range p.rules {
