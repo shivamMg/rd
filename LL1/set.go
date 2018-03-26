@@ -13,14 +13,6 @@ func NewSet(elems []string) *Set {
 	return &s
 }
 
-func (s *Set) List() (l []string) {
-	for e := range s.m {
-		l = append(l, e)
-	}
-
-	return l
-}
-
 func (s *Set) Add(ele string) {
 	(*s).m[ele] = struct{}{}
 }
@@ -33,6 +25,14 @@ func (s *Set) Merge(s2 Set) {
 	for ele := range s2.m {
 		(*s).m[ele] = struct{}{}
 	}
+}
+
+func (s Set) List() (l []string) {
+	for e := range s.m {
+		l = append(l, e)
+	}
+
+	return l
 }
 
 func (s Set) Has(ele string) bool {

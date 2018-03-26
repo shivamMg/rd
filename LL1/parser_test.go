@@ -61,6 +61,15 @@ func init() {
 				"C": []string{"h", "|", "ε"},
 			},
 		},
+		input{
+			terms:    []string{"a", "+", "(", ")"},
+			nonTerms: []string{"S", "F"},
+			start:    "S",
+			rules: map[string][]string{
+				"S": []string{"F", "|", "(", "S", "+", "F", ")"},
+				"F": []string{"a"},
+			},
+		},
 	)
 }
 
@@ -207,6 +216,21 @@ func TestParseTable(t *testing.T) {
 	}
 	p := NewParser(in.terms, in.nonTerms, in.start, in.rules)
 	got := p.ParseTable()
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("Expected: %v\nGot: %v\n", want, got)
+	}
+}
+
+func TestParse(t *testing.T) {
+	in := testInputs[4]
+	want := [][]string{
+		[]string{"S", "(", "S", "+", "F", ")"},
+		[]string{"S", "F"},
+		[]string{"F", "a"},
+		[]string{"F", "a"},
+	}
+	p := NewParser(in.terms, in.nonTerms, in.start, in.rules)
+	got := p.Parse([]string{"(", "a", "+", "a", ")"})
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("Expected: %v\nGot: %v\n", want, got)
 	}
