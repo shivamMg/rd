@@ -191,27 +191,44 @@ func TestParseTable(t *testing.T) {
 	in := testInputs[2]
 	want := map[string]map[string][]string{
 		"T'": map[string][]string{
-			"*": []string{"*", "F", "T'"},
-			"+": []string{"ε"},
-			"$": []string{"ε"},
-			")": []string{"ε"},
+			"*":  []string{"*", "F", "T'"},
+			"+":  []string{"ε"},
+			"$":  []string{"ε"},
+			")":  []string{"ε"},
+			"(":  nil,
+			"id": nil,
 		},
 		"F": map[string][]string{
 			"id": []string{"id"},
 			"(":  []string{"(", "E", ")"},
+			"$":  nil,
+			")":  nil,
+			"*":  nil,
+			"+":  nil,
 		},
 		"E": map[string][]string{
 			"id": []string{"T", "E'"},
 			"(":  []string{"T", "E'"},
+			")":  nil,
+			"*":  nil,
+			"+":  nil,
+			"$":  nil,
 		},
 		"E'": map[string][]string{
-			"+": []string{"+", "T", "E'"},
-			"$": []string{"ε"},
-			")": []string{"ε"},
+			"+":  []string{"+", "T", "E'"},
+			"$":  []string{"ε"},
+			")":  []string{"ε"},
+			"id": nil,
+			"(":  nil,
+			"*":  nil,
 		},
 		"T": map[string][]string{
 			"id": []string{"F", "T'"},
 			"(":  []string{"F", "T'"},
+			"*":  nil,
+			")":  nil,
+			"+":  nil,
+			"$":  nil,
 		},
 	}
 	p := NewParser(in.terms, in.nonTerms, in.start, in.rules)
@@ -230,7 +247,7 @@ func TestParse(t *testing.T) {
 		[]string{"F", "a"},
 	}
 	p := NewParser(in.terms, in.nonTerms, in.start, in.rules)
-	got := p.Parse([]string{"(", "a", "+", "a", ")"})
+	got, _ := p.Parse([]string{"(", "a", "+", "a", ")"})
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("Expected: %v\nGot: %v\n", want, got)
 	}
