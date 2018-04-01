@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func main() {
 	terms := []string{"a", "+", "(", ")"}
@@ -12,5 +15,7 @@ func main() {
 	}
 
 	p := NewParser(terms, nonTerms, start, rules)
-	fmt.Println(p.Parse([]string{"(", "a", "+", "a", ")"}))
+	tree, _ := p.Parse([]string{"(", "a", "+", "a", ")"})
+	data, _ := json.MarshalIndent(tree, "", "  ")
+	fmt.Println(string(data))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -240,14 +241,57 @@ func TestParseTable(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	in := testInputs[4]
-	want := [][]string{
-		[]string{"S", "(", "S", "+", "F", ")"},
-		[]string{"S", "F"},
-		[]string{"F", "a"},
-		[]string{"F", "a"},
+	wantJSON := `{
+"Root": {
+	"Symbol": "S",
+	"Children": [
+	{
+		"Symbol": "(",
+		"Children": null
+	},
+	{
+		"Symbol": "S",
+		"Children": [
+		{
+			"Symbol": "F",
+			"Children": [
+			{
+				"Symbol": "a",
+				"Children": null
+			}
+			]
+		}
+		]
+	},
+	{
+		"Symbol": "+",
+		"Children": null
+	},
+	{
+		"Symbol": "F",
+		"Children": [
+		{
+			"Symbol": "a",
+			"Children": null
+		}
+		]
+	},
+	{
+		"Symbol": ")",
+		"Children": null
 	}
+	]
+}
+}`
+	var want, got interface{}
+	json.Unmarshal([]byte(wantJSON), &want)
+
 	p := NewParser(in.terms, in.nonTerms, in.start, in.rules)
-	got, _ := p.Parse([]string{"(", "a", "+", "a", ")"})
+	tree, _ := p.Parse([]string{"(", "a", "+", "a", ")"})
+	// serialize and deserialize for equality check
+	gotJSON, _ := json.Marshal(tree)
+	json.Unmarshal(gotJSON, &got)
+
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("Expected: %v\nGot: %v\n", want, got)
 	}

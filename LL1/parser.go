@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 const (
 	// Epsilon symbol represents an empty string.
@@ -57,38 +59,40 @@ func (p Parser) IsSymbol(symbol string) bool {
 	return symbol == Epsilon || p.terms.Has(symbol) || p.nonTerms.Has(symbol)
 }
 
-// Parse returns rules for left-most derivation of input.
-func (p Parser) Parse(input []string) ([][]string, error) {
+// Parse returns parse tree for input.
+func (p Parser) Parse(input []string) (*Tree, error) {
+	root := NewNode(p.start)
+	st := new(stack)
+	st.Push(NewNode(Dollar), nil)
+	st.Push(root, nil)
+
 	input = append(input, Dollar)
-	derivation := [][]string{}
-	stack := []string{Dollar, p.start}
 	table := p.ParseTable()
-
+	// index of current string in input
 	pos := 0
-	for len(stack) > 0 {
-		s := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-		sym := input[pos]
-
+	for !st.isEmpty() {
+		s, sym := st.Pop(), input[pos]
 		switch {
-		case p.IsTerm(s) || s == Dollar:
-			if s != sym {
-				return [][]string{}, errors.New("Bad symbol: " + sym)
+		case s.Symbol == Dollar || p.IsTerm(s.Symbol):
+			if s.Symbol != sym {
+				return nil, errors.New("Bad symbol: " + sym)
 			}
+			if s.Symbol == Dollar {
+				break
+			}
+			s.parent.Add(s.Node)
 			pos++
-		case p.IsNonTerm(s):
-			seg := table[s][sym]
+		case p.IsNonTerm(s.Symbol):
+			seg := table[s.Symbol][sym]
 			for i := len(seg) - 1; i >= 0; i-- {
-				stack = append(stack, seg[i])
+				st.Push(NewNode(seg[i]), s.Node)
 			}
-
-			d := []string{s}
-			d = append(d, seg...)
-			derivation = append(derivation, d)
+			if root != s.Node {
+				s.parent.Add(s.Node)
+			}
 		}
 	}
-
-	return derivation, nil
+	return &Tree{Root: root}, nil
 }
 
 // ParseTable returns parsing table for the rules.
