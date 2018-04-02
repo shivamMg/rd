@@ -1,17 +1,24 @@
 package types
 
-// Tree represents a node in a parse tree.
+// Tree represents a parse tree.
 type Tree struct {
 	Symbol   string
 	Children []*Tree
 }
 
-// NewTree returns a node with Symbol set to symbol.
-func NewTree(symbol string) *Tree {
-	return &Tree{Symbol: symbol}
+// NewTree returns a Tree with Symbol set to symbol, and adds
+// subtrees as it's children.
+func NewTree(symbol string, subtrees ...*Tree) *Tree {
+	t := Tree{Symbol: symbol}
+	for _, subtree := range subtrees {
+		if subtree != nil {
+			t.Children = append(t.Children, subtree)
+		}
+	}
+	return &t
 }
 
-// Add adds subtree as a child to n.
+// Add adds tree as a child to t.
 func (t *Tree) Add(tree *Tree) {
 	t.Children = append(t.Children, tree)
 }
