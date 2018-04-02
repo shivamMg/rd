@@ -242,46 +242,44 @@ func TestParseTable(t *testing.T) {
 func TestParse(t *testing.T) {
 	in := testInputs[4]
 	wantJSON := `{
-"Root": {
+"Symbol": "S",
+"Children": [
+	{
+	"Symbol": "(",
+	"Children": null
+	},
+	{
 	"Symbol": "S",
 	"Children": [
-	{
-		"Symbol": "(",
-		"Children": null
-	},
-	{
-		"Symbol": "S",
-		"Children": [
 		{
-			"Symbol": "F",
-			"Children": [
-			{
-				"Symbol": "a",
-				"Children": null
-			}
-			]
-		}
-		]
-	},
-	{
-		"Symbol": "+",
-		"Children": null
-	},
-	{
 		"Symbol": "F",
 		"Children": [
-		{
+			{
 			"Symbol": "a",
 			"Children": null
-		}
+			}
 		]
+		}
+	]
 	},
 	{
-		"Symbol": ")",
+	"Symbol": "+",
+	"Children": null
+	},
+	{
+	"Symbol": "F",
+	"Children": [
+		{
+		"Symbol": "a",
 		"Children": null
-	}
+		}
 	]
-}
+	},
+	{
+	"Symbol": ")",
+	"Children": null
+	}
+]
 }`
 	var want, got interface{}
 	json.Unmarshal([]byte(wantJSON), &want)

@@ -1,16 +1,20 @@
 package main
 
+import (
+	t "github.com/shivammg/parsers/types"
+)
+
 type stackEle struct {
-	*Node
-	parent *Node
+	*t.Tree
+	parent *t.Tree
 }
 
 type stack struct {
 	s []stackEle
 }
 
-func (st *stack) Push(node, parent *Node) {
-	st.s = append(st.s, stackEle{Node: node, parent: parent})
+func (st *stack) Push(node, parent *t.Tree) {
+	st.s = append(st.s, stackEle{Tree: node, parent: parent})
 }
 
 func (st *stack) Pop() *stackEle {

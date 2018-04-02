@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+
+	t "github.com/shivammg/parsers/types"
 )
 
 const (
@@ -60,10 +62,10 @@ func (p Parser) IsSymbol(symbol string) bool {
 }
 
 // Parse returns parse tree for input.
-func (p Parser) Parse(input []string) (*Tree, error) {
-	root := NewNode(p.start)
+func (p Parser) Parse(input []string) (*t.Tree, error) {
+	root := t.NewTree(p.start)
 	st := new(stack)
-	st.Push(NewNode(Dollar), nil)
+	st.Push(t.NewTree(Dollar), nil)
 	st.Push(root, nil)
 
 	input = append(input, Dollar)
@@ -80,19 +82,19 @@ func (p Parser) Parse(input []string) (*Tree, error) {
 			if s.Symbol == Dollar {
 				break
 			}
-			s.parent.Add(s.Node)
+			s.parent.Add(s.Tree)
 			pos++
 		case p.IsNonTerm(s.Symbol):
 			seg := table[s.Symbol][sym]
 			for i := len(seg) - 1; i >= 0; i-- {
-				st.Push(NewNode(seg[i]), s.Node)
+				st.Push(t.NewTree(seg[i]), s.Tree)
 			}
-			if root != s.Node {
-				s.parent.Add(s.Node)
+			if root != s.Tree {
+				s.parent.Add(s.Tree)
 			}
 		}
 	}
-	return &Tree{Root: root}, nil
+	return root, nil
 }
 
 // ParseTable returns parsing table for the rules.
