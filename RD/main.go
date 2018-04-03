@@ -1,146 +1,64 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
 
 	t "github.com/shivammg/parsers/types"
 )
 
-/*
-Recursive Descent parser for the following grammar:
-	E  -> TE'
-	E' -> +TE'|ε
-	T  -> FT'
-	T' -> *FT'|ε
-	F  -> id|(E)
-
-ε represents empty string.
-*/
-
+// Parser represents a Recursive Descent parser.
 type Parser struct {
-	input    []string
-	curIndex int
+	input     []string
+	backtrack int
+	current   int
+	rules     map[string]func() (*t.Tree, error)
 }
 
+// NewParser returns a new Parser.
 func NewParser(input []string) *Parser {
-	return &Parser{input: input, curIndex: -1}
+	return &Parser{
+		input: input,
+		// Input's index stored for backtracking.
+		backtrack: -1,
+		// Input's index where we're currently at.
+		current: -1,
+		// map[non-terminal] -> production
+		rules: make(map[string]func() (*t.Tree, error)),
+	}
 }
 
-func (p Parser) next() string {
-	p.curIndex++
-	return p.input[p.curIndex]
+// Match matches symbol with the next token in input.
+func (p *Parser) Match(symbol string) bool {
+	if p.current >= len(p.input)-1 {
+		return false
+	}
+	p.current++
+	return symbol == p.input[p.current]
 }
 
-func (p Parser) match(symbol string) bool {
-	return symbol == p.next()
+// Backtrack resets current to where it was after last derivation.
+func (p *Parser) Backtrack() {
+	p.current = p.backtrack
 }
 
-// E parses: E  -> TE'
-func (p Parser) E() (*t.Tree, error) {
-	cur := p.curIndex
-
-	t1, err := p.T()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	t2, err := p.EPrime()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	return t.NewTree("E", t1, t2), nil
+// Register registers a production function for a non-terminal.
+func (p *Parser) Register(nonTerm string, f func() (*t.Tree, error)) {
+	p.rules[nonTerm] = f
 }
 
-// EPrime parses: E' -> +TE'|ε
-func (p Parser) EPrime() (*t.Tree, error) {
-	cur := p.curIndex
-
-	if !p.match("+") {
-		// epsilon exists for the rule
-		return nil, nil
+// Run calls the production function for a non-terminal.
+func (p *Parser) Run(nonTerm string) (*t.Tree, error) {
+	f, ok := p.rules[nonTerm]
+	if !ok {
+		return nil, errors.New("Rule does not exist")
 	}
-	t1, err := p.T()
+	p.backtrack = p.current
+	tree, err := f()
 	if err != nil {
-		p.curIndex = cur
-		return nil, err
+		p.Backtrack()
 	}
-	t2, err := p.EPrime()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	return t.NewTree("E'", t.NewTree("+"), t1, t2), nil
-}
-
-// T parses: T  -> FT'
-func (p Parser) T() (*t.Tree, error) {
-	cur := p.curIndex
-
-	t1, err := p.F()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	t2, err := p.TPrime()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	return t.NewTree("T", t1, t2), nil
-}
-
-// TPrime parses: T' -> *FT'|ε
-func (p Parser) TPrime() (*t.Tree, error) {
-	cur := p.curIndex
-
-	if !p.match("*") {
-		// epsilon exists for the rule
-		return nil, nil
-	}
-	t1, err := p.F()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	t2, err := p.TPrime()
-	if err != nil {
-		p.curIndex = cur
-		return nil, err
-	}
-	return t.NewTree("T'", t.NewTree("*"), t1, t2), nil
-}
-
-// F parses: F  -> id|(E)
-func (p Parser) F() (*t.Tree, error) {
-	cur := p.curIndex
-
-	if p.match("id") {
-		return t.NewTree("F", t.NewTree("id")), nil
-	}
-	if p.match("(") {
-		t1, err := p.E()
-		if err != nil {
-			p.curIndex = cur
-			return nil, err
-		}
-		if p.match(")") {
-			return t.NewTree("F", t.NewTree("("), t1, t.NewTree(")")), nil
-		}
-	}
-	p.curIndex = cur
-	return nil, errors.New("No match")
+	return tree, err
 }
 
 func main() {
-	p := NewParser([]string{"id"})
-	t, err := p.E()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	b, _ := json.MarshalIndent(t, "", "  ")
-	fmt.Println(string(b))
 }
