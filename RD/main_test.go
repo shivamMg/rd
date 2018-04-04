@@ -9,10 +9,7 @@ import (
 	t "github.com/shivammg/parsers/types"
 )
 
-// Epsilon represents empty string.
-const Epsilon = "ε"
-
-func TestOne(test *testing.T) {
+func TestArithGrammar(test *testing.T) {
 	/*
 	   	"(", "id", "*", "id", ")", "+", "id"
 	   Recursive Descent parser for the following grammar:
@@ -25,6 +22,8 @@ func TestOne(test *testing.T) {
 	   - Used in parsing addition and multiplication arithmetic expressions.
 	   - ε represents empty string.
 	*/
+	// Epsilon represents empty string.
+	const Epsilon = "ε"
 	wantJSON := `{
 		"Symbol": "E",
 		"Children": [
@@ -157,7 +156,6 @@ func TestOne(test *testing.T) {
 	json.Unmarshal([]byte(wantJSON), &want)
 	p := NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
 
-	/* shit */
 	p.Register("E", func() (*t.Tree, error) {
 		t1, err := p.Run("T")
 		if err != nil {
@@ -183,7 +181,6 @@ func TestOne(test *testing.T) {
 			return t.NewTree("E'", t.NewTree("+"), t1, t2), nil
 		}
 		// epsilon exists for the rule
-		p.Backtrack()
 		return t.NewTree("E'", t.NewTree(Epsilon)), nil
 	})
 
@@ -212,7 +209,6 @@ func TestOne(test *testing.T) {
 			return t.NewTree("T'", t.NewTree("*"), t1, t2), nil
 		}
 		// epsilon exists for the rule
-		p.Backtrack()
 		return t.NewTree("T'", t.NewTree(Epsilon)), nil
 	})
 
@@ -220,7 +216,6 @@ func TestOne(test *testing.T) {
 		if p.Match("id") {
 			return t.NewTree("F", t.NewTree("id")), nil
 		}
-		p.Backtrack()
 		if p.Match("(") {
 			t1, err := p.Run("E")
 			if err != nil {
@@ -230,10 +225,8 @@ func TestOne(test *testing.T) {
 				return t.NewTree("F", t.NewTree("("), t1, t.NewTree(")")), nil
 			}
 		}
-		return nil, errors.New("No match")
+		return nil, errors.New(ErrNoMatch)
 	})
-
-	/* shit */
 
 	tree, err := p.Run("E")
 	if err != nil {
@@ -243,5 +236,45 @@ func TestOne(test *testing.T) {
 	json.Unmarshal(gotJSON, &got)
 	if !reflect.DeepEqual(want, got) {
 		test.Errorf("Expected: %v\nGot: %v\n", want, got)
+	}
+}
+
+func TestInvalidInput(test *testing.T) {
+	p := NewParser([]string{"a", "c"})
+
+	p.Register("E", func() (*t.Tree, error) {
+		if p.Match("a") {
+			t1, err := p.Run("F")
+			if err == nil {
+				return t.NewTree("E", t.NewTree("a"), t1), nil
+			}
+			// explicitly backtrack since there was no incorrect Match,
+			// and we need to run next production.
+			p.Backtrack()
+		}
+		t1, err := p.Run("G")
+		if err == nil {
+			return t.NewTree("E", t1), nil
+		}
+		return nil, errors.New(ErrNoMatch)
+	})
+
+	p.Register("F", func() (*t.Tree, error) {
+		if p.Match("b") {
+			return t.NewTree("F", t.NewTree("b")), nil
+		}
+		return nil, errors.New(ErrNoMatch)
+	})
+
+	p.Register("G", func() (*t.Tree, error) {
+		if p.Match("c") {
+			return t.NewTree("G", t.NewTree("c")), nil
+		}
+		return nil, errors.New(ErrNoMatch)
+	})
+
+	_, err := p.Run("E")
+	if err != nil && err.Error() != ErrNoMatch {
+		test.Errorf("Run should've failed. Expected:%s Got:%s", ErrNoMatch, err.Error())
 	}
 }

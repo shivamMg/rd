@@ -18,7 +18,7 @@ func NewTree(symbol string, subtrees ...*Tree) *Tree {
 	return &t
 }
 
-// Add adds tree as a child to t.
-func (t *Tree) Add(tree *Tree) {
-	t.Children = append(t.Children, tree)
+// Add adds subtree to t.
+func (t *Tree) Add(subtree *Tree) {
+	t.Children = append(t.Children, subtree)
 }
