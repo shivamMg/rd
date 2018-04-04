@@ -1,4 +1,4 @@
-package main
+package rd
 
 import (
 	"errors"
@@ -105,7 +105,4 @@ func (p *Parser) Run(nonTerm string) (*t.Tree, error) {
 		p.st.pop()
 	}
 	return tree, err
-}
-
-func main() {
 }

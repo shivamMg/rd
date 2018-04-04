@@ -1,4 +1,4 @@
-package main
+package rd_test
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	rd "github.com/shivammg/parsers/rd"
 	t "github.com/shivammg/parsers/types"
 )
 
@@ -154,7 +155,7 @@ func TestArithGrammar(test *testing.T) {
 	  }`
 	var want, got interface{}
 	json.Unmarshal([]byte(wantJSON), &want)
-	p := NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
+	p := rd.NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
 
 	p.Register("E", func() (*t.Tree, error) {
 		t1, err := p.Run("T")
@@ -225,7 +226,7 @@ func TestArithGrammar(test *testing.T) {
 				return t.NewTree("F", t.NewTree("("), t1, t.NewTree(")")), nil
 			}
 		}
-		return nil, errors.New(ErrNoMatch)
+		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	tree, err := p.Run("E")
@@ -240,7 +241,7 @@ func TestArithGrammar(test *testing.T) {
 }
 
 func TestInvalidInput(test *testing.T) {
-	p := NewParser([]string{"a", "c"})
+	p := rd.NewParser([]string{"a", "c"})
 
 	p.Register("E", func() (*t.Tree, error) {
 		if p.Match("a") {
@@ -256,25 +257,25 @@ func TestInvalidInput(test *testing.T) {
 		if err == nil {
 			return t.NewTree("E", t1), nil
 		}
-		return nil, errors.New(ErrNoMatch)
+		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	p.Register("F", func() (*t.Tree, error) {
 		if p.Match("b") {
 			return t.NewTree("F", t.NewTree("b")), nil
 		}
-		return nil, errors.New(ErrNoMatch)
+		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	p.Register("G", func() (*t.Tree, error) {
 		if p.Match("c") {
 			return t.NewTree("G", t.NewTree("c")), nil
 		}
-		return nil, errors.New(ErrNoMatch)
+		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	_, err := p.Run("E")
-	if err != nil && err.Error() != ErrNoMatch {
-		test.Errorf("Run should've failed. Expected:%s Got:%s", ErrNoMatch, err.Error())
+	if err != nil && err.Error() != rd.ErrNoMatch {
+		test.Errorf("Run should've failed. Expected:%s Got:%s", rd.ErrNoMatch, err.Error())
 	}
 }
