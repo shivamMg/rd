@@ -106,3 +106,9 @@ func (p *Parser) Run(nonTerm string) (*t.Tree, error) {
 	p.st.pop()
 	return tree, err
 }
+
+// T returns a parse tree with symbol at the root and subtrees attached
+// as children.
+func T(symbol string, subtrees ...*t.Tree) *t.Tree {
+	return t.NewTree(symbol, subtrees...)
+}

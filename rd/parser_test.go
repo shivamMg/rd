@@ -158,72 +158,72 @@ func TestArithGrammar(test *testing.T) {
 	p := rd.NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
 
 	p.Register("E", func() (*t.Tree, error) {
-		t1, err := p.Run("T")
+		T, err := p.Run("T")
 		if err != nil {
 			return nil, err
 		}
-		t2, err := p.Run("E'")
+		EP, err := p.Run("E'")
 		if err != nil {
 			return nil, err
 		}
-		return t.NewTree("E", t1, t2), nil
+		return rd.T("E", T, EP), nil
 	})
 
 	p.Register("E'", func() (*t.Tree, error) {
 		if p.Match("+") {
-			t1, err := p.Run("T")
+			TP, err := p.Run("T")
 			if err != nil {
 				return nil, err
 			}
-			t2, err := p.Run("E'")
+			EP, err := p.Run("E'")
 			if err != nil {
 				return nil, err
 			}
-			return t.NewTree("E'", t.NewTree("+"), t1, t2), nil
+			return rd.T("E'", rd.T("+"), TP, EP), nil
 		}
 		// epsilon exists for the rule
-		return t.NewTree("E'", t.NewTree(Epsilon)), nil
+		return rd.T("E'", rd.T(Epsilon)), nil
 	})
 
 	p.Register("T", func() (*t.Tree, error) {
-		t1, err := p.Run("F")
+		F, err := p.Run("F")
 		if err != nil {
 			return nil, err
 		}
-		t2, err := p.Run("T'")
+		TP, err := p.Run("T'")
 		if err != nil {
 			return nil, err
 		}
-		return t.NewTree("T", t1, t2), nil
+		return rd.T("T", F, TP), nil
 	})
 
 	p.Register("T'", func() (*t.Tree, error) {
 		if p.Match("*") {
-			t1, err := p.Run("F")
+			F, err := p.Run("F")
 			if err != nil {
 				return nil, err
 			}
-			t2, err := p.Run("T'")
+			TP, err := p.Run("T'")
 			if err != nil {
 				return nil, err
 			}
-			return t.NewTree("T'", t.NewTree("*"), t1, t2), nil
+			return rd.T("T'", rd.T("*"), F, TP), nil
 		}
 		// epsilon exists for the rule
-		return t.NewTree("T'", t.NewTree(Epsilon)), nil
+		return rd.T("T'", rd.T(Epsilon)), nil
 	})
 
 	p.Register("F", func() (*t.Tree, error) {
 		if p.Match("id") {
-			return t.NewTree("F", t.NewTree("id")), nil
+			return rd.T("F", rd.T("id")), nil
 		}
 		if p.Match("(") {
-			t1, err := p.Run("E")
+			E, err := p.Run("E")
 			if err != nil {
 				return nil, err
 			}
 			if p.Match(")") {
-				return t.NewTree("F", t.NewTree("("), t1, t.NewTree(")")), nil
+				return rd.T("F", rd.T("("), E, rd.T(")")), nil
 			}
 		}
 		return nil, errors.New(rd.ErrNoMatch)
@@ -245,31 +245,31 @@ func TestInvalidInput(test *testing.T) {
 
 	p.Register("E", func() (*t.Tree, error) {
 		if p.Match("a") {
-			t1, err := p.Run("F")
+			F, err := p.Run("F")
 			if err == nil {
-				return t.NewTree("E", t.NewTree("a"), t1), nil
+				return rd.T("E", rd.T("a"), F), nil
 			}
 			// explicitly backtrack since there was no incorrect Match,
 			// and we need to run next production.
 			p.Backtrack()
 		}
-		t1, err := p.Run("G")
+		G, err := p.Run("G")
 		if err == nil {
-			return t.NewTree("E", t1), nil
+			return rd.T("E", G), nil
 		}
 		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	p.Register("F", func() (*t.Tree, error) {
 		if p.Match("b") {
-			return t.NewTree("F", t.NewTree("b")), nil
+			return rd.T("F", rd.T("b")), nil
 		}
 		return nil, errors.New(rd.ErrNoMatch)
 	})
 
 	p.Register("G", func() (*t.Tree, error) {
 		if p.Match("c") {
-			return t.NewTree("G", t.NewTree("c")), nil
+			return rd.T("G", rd.T("c")), nil
 		}
 		return nil, errors.New(rd.ErrNoMatch)
 	})
