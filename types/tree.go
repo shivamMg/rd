@@ -22,3 +22,12 @@ func NewTree(symbol string, subtrees ...*Tree) *Tree {
 func (t *Tree) Add(subtree *Tree) {
 	t.Children = append(t.Children, subtree)
 }
+
+func (t *Tree) Detach(subtree *Tree) {
+	for i, child := range t.Children {
+		if child == subtree {
+			t.Children = append(t.Children[:i], t.Children[i+1:]...)
+			break
+		}
+	}
+}

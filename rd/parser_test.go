@@ -2,12 +2,10 @@ package rd_test
 
 import (
 	"encoding/json"
-	"errors"
 	"reflect"
 	"testing"
 
 	rd "github.com/shivammg/parsers/rd"
-	t "github.com/shivammg/parsers/types"
 )
 
 func TestArithGrammar(test *testing.T) {
@@ -23,217 +21,157 @@ func TestArithGrammar(test *testing.T) {
 	   - Used in parsing addition and multiplication arithmetic expressions.
 	   - ε represents empty string.
 	*/
-	// Epsilon represents empty string.
-	const Epsilon = "ε"
 	wantJSON := `{
 		"Symbol": "E",
 		"Children": [
-		  {
-			"Symbol": "T",
-			"Children": [
-			  {
-				"Symbol": "F",
-				"Children": [
-				  {
-					"Symbol": "(",
-					"Children": null
-				  },
-				  {
-					"Symbol": "E",
-					"Children": [
-					  {
-						"Symbol": "T",
-						"Children": [
-						  {
-							"Symbol": "F",
-							"Children": [
-							  {
-								"Symbol": "id",
-								"Children": null
-							  }
-							]
-						  },
-						  {
-							"Symbol": "T'",
-							"Children": [
-							  {
-								"Symbol": "*",
-								"Children": null
-							  },
-							  {
-								"Symbol": "F",
-								"Children": [
-								  {
-									"Symbol": "id",
-									"Children": null
-								  }
-								]
-							  },
-							  {
-								"Symbol": "T'",
-								"Children": [
-								  {
-									"Symbol": "ε",
-									"Children": null
-								  }
-								]
-							  }
-							]
-						  }
-						]
-					  },
-					  {
-						"Symbol": "E'",
-						"Children": [
-						  {
-							"Symbol": "ε",
-							"Children": null
-						  }
-						]
-					  }
-					]
-				  },
-				  {
-					"Symbol": ")",
-					"Children": null
-				  }
-				]
-			  },
-			  {
-				"Symbol": "T'",
-				"Children": [
-				  {
-					"Symbol": "ε",
-					"Children": null
-				  }
-				]
-			  }
-			]
-		  },
-		  {
-			"Symbol": "E'",
-			"Children": [
-			  {
-				"Symbol": "+",
-				"Children": null
-			  },
-			  {
+			{
 				"Symbol": "T",
 				"Children": [
-				  {
-					"Symbol": "F",
-					"Children": [
-					  {
-						"Symbol": "id",
+					{
+						"Symbol": "F",
+						"Children": [
+							{
+								"Symbol": "(",
+								"Children": null
+							},
+							{
+								"Symbol": "E",
+								"Children": [
+									{
+										"Symbol": "T",
+										"Children": [
+											{
+												"Symbol": "F",
+												"Children": [
+													{
+														"Symbol": "id",
+														"Children": null
+													}
+												]
+											},
+											{
+												"Symbol": "T'",
+												"Children": [
+													{
+														"Symbol": "*",
+														"Children": null
+													},
+													{
+														"Symbol": "F",
+														"Children": [
+															{
+																"Symbol": "id",
+																"Children": null
+															}
+														]
+													},
+													{
+														"Symbol": "T'",
+														"Children": null
+													}
+												]
+											}
+										]
+									},
+									{
+										"Symbol": "E'",
+										"Children": null
+									}
+								]
+							},
+							{
+								"Symbol": ")",
+								"Children": null
+							}
+						]
+					},
+					{
+						"Symbol": "T'",
 						"Children": null
-					  }
-					]
-				  },
-				  {
-					"Symbol": "T'",
-					"Children": [
-					  {
-						"Symbol": "ε",
-						"Children": null
-					  }
-					]
-				  }
+					}
 				]
-			  },
-			  {
+			},
+			{
 				"Symbol": "E'",
 				"Children": [
-				  {
-					"Symbol": "ε",
-					"Children": null
-				  }
+					{
+						"Symbol": "+",
+						"Children": null
+					},
+					{
+						"Symbol": "T",
+						"Children": [
+							{
+								"Symbol": "F",
+								"Children": [
+									{
+										"Symbol": "id",
+										"Children": null
+									}
+								]
+							},
+							{
+								"Symbol": "T'",
+								"Children": null
+							}
+						]
+					},
+					{
+						"Symbol": "E'",
+						"Children": null
+					}
 				]
-			  }
-			]
-		  }
+			}
 		]
-	  }`
+	}`
 	var want, got interface{}
 	json.Unmarshal([]byte(wantJSON), &want)
 	p := rd.NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
 
-	p.Register("E", func() (*t.Tree, error) {
-		T, err := p.Run("T")
-		if err != nil {
-			return nil, err
-		}
-		EP, err := p.Run("E'")
-		if err != nil {
-			return nil, err
-		}
-		return rd.T("E", T, EP), nil
+	p.Register("E", func() bool {
+		return p.Match("T") && p.Match("E'")
 	})
 
-	p.Register("E'", func() (*t.Tree, error) {
-		if p.Match("+") {
-			TP, err := p.Run("T")
-			if err != nil {
-				return nil, err
-			}
-			EP, err := p.Run("E'")
-			if err != nil {
-				return nil, err
-			}
-			return rd.T("E'", rd.T("+"), TP, EP), nil
+	p.Register("E'", func() bool {
+		if p.Match("+") &&
+			p.Match("T") &&
+			p.Match("E'") {
+			return true
 		}
 		// epsilon exists for the rule
-		return rd.T("E'", rd.T(Epsilon)), nil
+		return true
 	})
 
-	p.Register("T", func() (*t.Tree, error) {
-		F, err := p.Run("F")
-		if err != nil {
-			return nil, err
+	p.Register("T", func() bool {
+		if p.Match("F") &&
+			p.Match("T'") {
+			return true
 		}
-		TP, err := p.Run("T'")
-		if err != nil {
-			return nil, err
-		}
-		return rd.T("T", F, TP), nil
+		return false
 	})
 
-	p.Register("T'", func() (*t.Tree, error) {
-		if p.Match("*") {
-			F, err := p.Run("F")
-			if err != nil {
-				return nil, err
-			}
-			TP, err := p.Run("T'")
-			if err != nil {
-				return nil, err
-			}
-			return rd.T("T'", rd.T("*"), F, TP), nil
+	p.Register("T'", func() bool {
+		if p.Match("*") &&
+			p.Match("F") &&
+			p.Match("T'") {
+			return true
 		}
 		// epsilon exists for the rule
-		return rd.T("T'", rd.T(Epsilon)), nil
+		return true
 	})
 
-	p.Register("F", func() (*t.Tree, error) {
+	p.Register("F", func() bool {
 		if p.Match("id") {
-			return rd.T("F", rd.T("id")), nil
+			return true
 		}
-		if p.Match("(") {
-			E, err := p.Run("E")
-			if err != nil {
-				return nil, err
-			}
-			if p.Match(")") {
-				return rd.T("F", rd.T("("), E, rd.T(")")), nil
-			}
-		}
-		return nil, errors.New(rd.ErrNoMatch)
+		return p.Match("(") && p.Match("E") && p.Match(")")
 	})
 
-	tree, err := p.Run("E")
-	if err != nil {
-		test.Fatal(err)
+	gotOK := p.Match("E")
+	if gotOK != true {
+		test.Fatal("Parsing failed")
 	}
-	gotJSON, _ := json.Marshal(tree)
+	gotJSON, _ := json.Marshal(p.Tree())
 	json.Unmarshal(gotJSON, &got)
 	if !reflect.DeepEqual(want, got) {
 		test.Errorf("Expected: %v\nGot: %v\n", want, got)
@@ -243,39 +181,24 @@ func TestArithGrammar(test *testing.T) {
 func TestInvalidInput(test *testing.T) {
 	p := rd.NewParser([]string{"a", "c"})
 
-	p.Register("E", func() (*t.Tree, error) {
-		if p.Match("a") {
-			F, err := p.Run("F")
-			if err == nil {
-				return rd.T("E", rd.T("a"), F), nil
-			}
-			// explicitly backtrack since there was no incorrect Match,
-			// and we need to run next production.
-			p.Backtrack()
+	p.Register("E", func() bool {
+		if p.Match("a") &&
+			p.Match("F") {
+			return true
 		}
-		G, err := p.Run("G")
-		if err == nil {
-			return rd.T("E", G), nil
-		}
-		return nil, errors.New(rd.ErrNoMatch)
+		return p.Match("G")
 	})
 
-	p.Register("F", func() (*t.Tree, error) {
-		if p.Match("b") {
-			return rd.T("F", rd.T("b")), nil
-		}
-		return nil, errors.New(rd.ErrNoMatch)
+	p.Register("F", func() bool {
+		return p.Match("b")
 	})
 
-	p.Register("G", func() (*t.Tree, error) {
-		if p.Match("c") {
-			return rd.T("G", rd.T("c")), nil
-		}
-		return nil, errors.New(rd.ErrNoMatch)
+	p.Register("G", func() bool {
+		return p.Match("c")
 	})
 
-	_, err := p.Run("E")
-	if err != nil && err.Error() != rd.ErrNoMatch {
-		test.Errorf("Run should've failed. Expected:%s Got:%s", rd.ErrNoMatch, err.Error())
+	ok := p.Match("E")
+	if ok {
+		test.Error("Match should've failed")
 	}
 }

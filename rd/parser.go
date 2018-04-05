@@ -1,55 +1,57 @@
 package rd
 
 import (
-	"errors"
-
 	t "github.com/shivammg/parsers/types"
 )
 
 const (
-	// ErrNoMatch is error text to signify that no matches were
-	// found for input token.
-	ErrNoMatch = "No match"
 	// ErrRuleNotFound is error text to signify that no production
 	// rule for was found for the non-terminal.
 	ErrRuleNotFound = "Rule not found"
 )
 
-type stack []int
+type ele struct {
+	index   int
+	nonTerm *t.Tree
+}
 
-func (st stack) peek() int {
+type stack []ele
+
+func (st stack) peek() ele {
 	l := len(st)
 	if l == 0 {
-		return -1
+		return ele{}
 	}
 	return st[l-1]
 }
 
-func (st *stack) pop() int {
+func (st *stack) pop() ele {
 	l := len(*st)
 	if l == 0 {
-		return -1
+		return ele{}
 	}
-	ele := (*st)[l-1]
+	e := (*st)[l-1]
 	*st = (*st)[:l-1]
-	return ele
+	return e
 }
 
-func (st *stack) push(ele int) {
-	*st = append(*st, ele)
+func (st *stack) push(e ele) {
+	*st = append(*st, e)
+}
+
+func (st *stack) isEmpty() bool {
+	return len(*st) == 0
 }
 
 // Parser represents a Recursive Descent parser.
 type Parser struct {
 	// Stores input tokens.
 	input []string
-	// Maintains input indexes as you keep deriving productions.
-	// Used in backtracking to a previous input index.
-	st stack
+	st    stack
 	// Input's index where we're currently at.
 	current int
 	// map[non-terminal] -> production function.
-	rules map[string]func() (*t.Tree, error)
+	rules map[string]func() bool
 }
 
 // NewParser returns a new Parser to parse input. Grammar production
@@ -59,56 +61,94 @@ func NewParser(input []string) *Parser {
 		input:   input,
 		st:      stack{},
 		current: -1,
-		rules:   make(map[string]func() (*t.Tree, error)),
+		rules:   make(map[string]func() bool),
 	}
 }
 
-// Backtrack resets the current position inside input. It is reset to where
-// it was during the beginning of the production function, the one that it's
-// called inside.
 func (p *Parser) Backtrack() {
-	p.current = p.st.peek()
+	e := p.st.peek()
+	p.current = e.index
 }
 
-// Register saves a production function for a non-terminal. This function can
-// then be called using Run method.
-func (p *Parser) Register(nonTerm string, f func() (*t.Tree, error)) {
+// Register saves a production function for a non-terminal.
+func (p *Parser) Register(nonTerm string, f func() bool) {
 	p.rules[nonTerm] = f
 }
 
-// Match matches terminal with the next token in input, and returns a boolean
-// accordingly. If the match was unsuccessful then Backtrack is called,
-// implicitly - user won't have to call it inside production function.
-func (p *Parser) Match(term string) bool {
-	if p.current >= len(p.input)-1 {
-		return false
-	}
-	p.current++
-	if term != p.input[p.current] {
-		p.Backtrack()
-		return false
-	}
-	return true
-}
-
-// Run calls the production function for a non-terminal that was saved using
-// Register.
-func (p *Parser) Run(nonTerm string) (*t.Tree, error) {
-	f, ok := p.rules[nonTerm]
+func (p *Parser) Match(symbol string) bool {
+	f, ok := p.rules[symbol]
 	if !ok {
-		return nil, errors.New(ErrRuleNotFound)
+		// it's a terminal
+		if p.current >= len(p.input)-1 {
+			return false
+		}
+		p.current++
+		if symbol != p.input[p.current] {
+			p.Backtrack()
+			return false
+		}
+
+		p.st.peek().nonTerm.Add(t.NewTree(symbol))
+		return true
 	}
-	p.st.push(p.current)
-	tree, err := f()
-	if err != nil {
+
+	// it's a non-terminal
+	tree := t.NewTree(symbol)
+	// if it's not the first production
+	if !p.st.isEmpty() {
+		p.st.peek().nonTerm.Add(tree)
+	}
+
+	p.st.push(ele{index: p.current, nonTerm: tree})
+	isMatch := f()
+	// don't pop if it's the last element
+	if len(p.st) > 1 {
+		p.st.pop()
+	}
+
+	if !isMatch {
+		p.st.peek().nonTerm.Detach(tree)
 		p.Backtrack()
 	}
-	p.st.pop()
-	return tree, err
+	return isMatch
 }
 
-// T returns a parse tree with symbol at the root and subtrees attached
-// as children.
-func T(symbol string, subtrees ...*t.Tree) *t.Tree {
-	return t.NewTree(symbol, subtrees...)
+func (p Parser) Tree() *t.Tree {
+	if p.st.isEmpty() {
+		return nil
+	}
+	return p.st.peek().nonTerm
 }
+
+/*
+func main() {
+	p := NewParser([]string{"a", "f", "h"})
+
+	p.Register("A", func() bool {
+		if p.Match("a") &&
+			p.Match("B") &&
+			p.Match("c") {
+			return true
+		}
+		return p.Match("E")
+	})
+
+	p.Register("B", func() bool {
+		return p.Match("f") && p.Match("g")
+	})
+
+	p.Register("E", func() bool {
+		return p.Match("a") && p.Match("F")
+	})
+
+	p.Register("F", func() bool {
+		return p.Match("f") && p.Match("h")
+	})
+
+	fmt.Println(p.Match("A"))
+	tree := p.st.pop().nonTerm
+	b, _ := json.MarshalIndent(tree, "", "  ")
+	fmt.Println(string(b))
+}
+
+*/
