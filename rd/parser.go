@@ -102,7 +102,7 @@ func (p *Parser) Run(nonTerm string) (*t.Tree, error) {
 	tree, err := f()
 	if err != nil {
 		p.Backtrack()
-		p.st.pop()
 	}
+	p.st.pop()
 	return tree, err
 }
