@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	rd "github.com/shivammg/parsers/rd"
+	"github.com/shivammg/parsers/rd"
 )
 
 func TestArithGrammar(test *testing.T) {

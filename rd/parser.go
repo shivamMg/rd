@@ -84,7 +84,7 @@ func (p *Parser) Match(symbol string) bool {
 		}
 		p.current++
 		if symbol != p.input[p.current] {
-			p.Backtrack()
+			p.current--
 			return false
 		}
 
