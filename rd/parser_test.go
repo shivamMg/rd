@@ -128,11 +128,11 @@ func TestArithGrammar(test *testing.T) {
 	json.Unmarshal([]byte(wantJSON), &want)
 	p := rd.NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
 
-	p.Register("E", func() bool {
+	p.Rule("E", func() bool {
 		return p.Match("T") && p.Match("E'")
 	})
 
-	p.Register("E'", func() bool {
+	p.Rule("E'", func() bool {
 		if p.Match("+") &&
 			p.Match("T") &&
 			p.Match("E'") {
@@ -142,7 +142,7 @@ func TestArithGrammar(test *testing.T) {
 		return true
 	})
 
-	p.Register("T", func() bool {
+	p.Rule("T", func() bool {
 		if p.Match("F") &&
 			p.Match("T'") {
 			return true
@@ -150,7 +150,7 @@ func TestArithGrammar(test *testing.T) {
 		return false
 	})
 
-	p.Register("T'", func() bool {
+	p.Rule("T'", func() bool {
 		if p.Match("*") &&
 			p.Match("F") &&
 			p.Match("T'") {
@@ -160,7 +160,7 @@ func TestArithGrammar(test *testing.T) {
 		return true
 	})
 
-	p.Register("F", func() bool {
+	p.Rule("F", func() bool {
 		if p.Match("id") {
 			return true
 		}
@@ -181,7 +181,7 @@ func TestArithGrammar(test *testing.T) {
 func TestInvalidInput(test *testing.T) {
 	p := rd.NewParser([]string{"a", "c"})
 
-	p.Register("E", func() bool {
+	p.Rule("E", func() bool {
 		if p.Match("a") &&
 			p.Match("F") {
 			return true
@@ -189,11 +189,11 @@ func TestInvalidInput(test *testing.T) {
 		return p.Match("G")
 	})
 
-	p.Register("F", func() bool {
+	p.Rule("F", func() bool {
 		return p.Match("b")
 	})
 
-	p.Register("G", func() bool {
+	p.Rule("G", func() bool {
 		return p.Match("c")
 	})
 

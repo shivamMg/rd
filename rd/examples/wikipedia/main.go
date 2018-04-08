@@ -32,10 +32,12 @@ factor =
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"regexp"
 
+	"github.com/DiSiqueira/GoTree"
 	"github.com/shivammg/parsers/rd"
+	"github.com/shivammg/parsers/types"
 )
 
 // Non-terminals
@@ -51,14 +53,21 @@ const (
 	Number     = "number"
 )
 
-func main() {
-	p := rd.NewParser([]string{"const", "id", "=", "9", ";", "id", ":=", "9", "."})
+var NonTerminals []string
 
-	p.Register(Program, func() bool {
+func init() {
+	NonTerminals = append(NonTerminals, Program, Block, Statement, Condition,
+		Expression, Term, Factor, Ident, Number)
+}
+
+func main() {
+	p := rd.NewParser(squareProgram())
+
+	p.Rule(Program, func() bool {
 		return p.Match(Block) && p.Match(".")
 	})
 
-	p.Register(Block, func() bool {
+	p.Rule(Block, func() bool {
 		if p.Match("const") {
 			if !(p.Match(Ident) && p.Match("=") && p.Match(Number)) {
 				return false
@@ -93,7 +102,7 @@ func main() {
 		return p.Match(Statement)
 	})
 
-	p.Register(Statement, func() bool {
+	p.Rule(Statement, func() bool {
 		switch {
 		case p.Match(Ident):
 			if !(p.Match(":=") && p.Match(Expression)) {
@@ -129,31 +138,22 @@ func main() {
 		return true
 	})
 
-	p.Register(Condition, func() bool {
+	p.Rule(Condition, func() bool {
 		switch {
 		case p.Match("odd"):
 			return p.Match(Expression)
 		case p.Match(Expression):
-			switch {
-			case p.Match("="):
-			case p.Match("#"):
-			case p.Match("<"):
-			case p.Match("<="):
-			case p.Match(">"):
-			case p.Match(">="):
-			default:
-				return false
+			if p.Match("=") || p.Match("#") || p.Match("<") || p.Match("<=") || p.Match(">") || p.Match(">=") {
+				return p.Match(Expression)
 			}
-			return p.Match(Expression)
+			return false
 		default:
 			return false
 		}
 	})
 
-	p.Register(Expression, func() bool {
-		switch {
-		case p.Match("+"):
-		case p.Match("-"):
+	p.Rule(Expression, func() bool {
+		if p.Match("+") || p.Match("-") {
 		}
 		if !p.Match(Term) {
 			return false
@@ -166,7 +166,7 @@ func main() {
 		return true
 	})
 
-	p.Register(Term, func() bool {
+	p.Rule(Term, func() bool {
 		if !p.Match(Factor) {
 			return false
 		}
@@ -178,7 +178,7 @@ func main() {
 		return true
 	})
 
-	p.Register(Factor, func() bool {
+	p.Rule(Factor, func() bool {
 		switch {
 		case p.Match(Ident):
 		case p.Match(Number):
@@ -189,15 +189,48 @@ func main() {
 		return true
 	})
 
-	p.Register(Ident, func() bool {
-		return p.Match("id")
+	p.Rule(Ident, func() bool {
+		next := p.NextToken()
+		if ok, _ := regexp.MatchString(`[[:alpha:]]`, next); !ok {
+			p.Retract()
+			return false
+		}
+		// must not be a reserved word
+		reserved := NonTerminals
+		reserved = append(reserved, "const", "var", "procedure", "begin", "end", "call", "if", "then", "while", "do", "odd")
+		for _, sym := range reserved {
+			if next == sym {
+				p.Retract()
+				return false
+			}
+		}
+		p.Add(next)
+		return true
 	})
 
-	p.Register(Number, func() bool {
-		return p.Match("9")
+	p.Rule(Number, func() bool {
+		next := p.NextToken()
+		if ok, _ := regexp.MatchString(`[[:digit:]]`, next); !ok {
+			p.Retract()
+			return false
+		}
+		p.Add(next)
+		return true
 	})
 
-	fmt.Println(p.Match(Program))
-	d, _ := json.MarshalIndent(p.Tree(), "", "  ")
-	fmt.Println(string(d))
+	fmt.Println("Match:", p.Match(Program))
+	print(p.Tree())
+}
+
+func print(t *types.Tree) {
+	goTree := *createGoTree(t)
+	fmt.Println(goTree.Print())
+}
+
+func createGoTree(root *types.Tree) *gotree.Tree {
+	t := gotree.New(root.Symbol)
+	for _, child := range root.Children {
+		t.AddTree(*createGoTree(child))
+	}
+	return &t
 }

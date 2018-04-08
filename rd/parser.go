@@ -1,154 +1,159 @@
 package rd
 
 import (
-	t "github.com/shivammg/parsers/types"
-)
-
-const (
-	// ErrRuleNotFound is error text to signify that no production
-	// rule for was found for the non-terminal.
-	ErrRuleNotFound = "Rule not found"
+	"github.com/shivammg/parsers/types"
 )
 
 type ele struct {
 	index   int
-	nonTerm *t.Tree
+	nonTerm *types.Tree
 }
 
+// stack stores trees as non-terminals are expanded. index stores
+// the tokens' index for which the nonTerm was expanded. The last
+// ele is the non-terminal that is currently being derived.
 type stack []ele
 
-func (st stack) peek() ele {
+func (st stack) peek() (ele, bool) {
 	l := len(st)
 	if l == 0 {
-		return ele{}
+		return ele{}, false
 	}
-	return st[l-1]
+	return st[l-1], true
 }
 
-func (st *stack) pop() ele {
+func (st *stack) pop() (ele, bool) {
 	l := len(*st)
 	if l == 0 {
-		return ele{}
+		return ele{}, false
 	}
 	e := (*st)[l-1]
 	*st = (*st)[:l-1]
-	return e
+	return e, true
 }
 
 func (st *stack) push(e ele) {
 	*st = append(*st, e)
 }
 
-func (st *stack) isEmpty() bool {
-	return len(*st) == 0
-}
-
 // Parser represents a Recursive Descent parser.
 type Parser struct {
-	// Stores input tokens.
-	input []string
-	st    stack
-	// Input's index where we're currently at.
+	// Stores tokens tokens.
+	tokens  []string
+	st      stack
 	current int
-	// map[non-terminal] -> production function.
-	rules map[string]func() bool
+	rules   map[string]func() bool
 }
 
-// NewParser returns a new Parser to parse input. Grammar production
-// rule functions must be registered to parse the input.
-func NewParser(input []string) *Parser {
+// NewParser returns a new Parser to parse tokens. Production functions
+// for non-terminals must be added using Rule method.
+func NewParser(tokens []string) *Parser {
 	return &Parser{
-		input:   input,
+		tokens:  tokens,
 		st:      stack{},
 		current: -1,
 		rules:   make(map[string]func() bool),
 	}
 }
 
-func (p *Parser) Backtrack() {
-	e := p.st.peek()
-	p.current = e.index
-}
-
-// Register saves a production function for a non-terminal.
-func (p *Parser) Register(nonTerm string, f func() bool) {
+// Rule saves a production function for a non-terminal.
+func (p *Parser) Rule(nonTerm string, f func() bool) {
 	p.rules[nonTerm] = f
 }
 
+// Reset resets parser p to parse newer tokens.
+func (p *Parser) Reset(tokens []string) {
+	p.tokens = tokens
+	p.st = stack{}
+	p.current = -1
+}
+
+// CurrentIndex returns the current token's index.
+func (p Parser) CurrentIndex() int {
+	return p.current
+}
+
+// Current returns the token where we are currently at.
+func (p *Parser) Current() string {
+	return p.tokens[p.current]
+}
+
+// NextToken returns next token from after incrementing the
+// current index. bool signifies if tokens are finished.
+func (p *Parser) NextToken() (string, bool) {
+	if p.current >= len(p.tokens)-1 {
+		return "", false
+	}
+	p.current++
+	return p.tokens[p.current], true
+}
+
+// Retract decrements the current index to bring current
+// to the previous token.
+func (p *Parser) Retract() {
+	p.current--
+}
+
+// Add adds terminal token term to the non-terminal that is
+// being expanded.
+func (p *Parser) Add(term string) {
+	e, _ := p.st.peek()
+	e.nonTerm.Add(types.NewTree(term))
+}
+
+// Match first makes out if symbol is a terminal or a non-terminal - by checking
+// if a production rule exists against it. If it's a terminal then it's matched by
+// the next token. If it's a non-terminal then the production function for it is
+// called.
+// Match also handles backtracking. In case of a terminal non-match, Retract is called.
+// In case of a failed non-terminal production, current is put to where it was before
+// the production.
 func (p *Parser) Match(symbol string) bool {
 	f, ok := p.rules[symbol]
 	if !ok {
 		// it's a terminal
-		if p.current >= len(p.input)-1 {
+		next, ok := p.NextToken()
+		if !ok {
+			p.Retract()
 			return false
 		}
-		p.current++
-		if symbol != p.input[p.current] {
-			p.current--
+		if symbol != next {
+			p.Retract()
 			return false
 		}
-
-		p.st.peek().nonTerm.Add(t.NewTree(symbol))
+		p.Add(symbol)
 		return true
 	}
 
 	// it's a non-terminal
-	tree := t.NewTree(symbol)
-	// if it's not the first production
-	if !p.st.isEmpty() {
-		p.st.peek().nonTerm.Add(tree)
+	t := types.NewTree(symbol)
+	// if it's not the first production attach t
+	// to the last non-terminal that was expanded
+	if e, ok := p.st.peek(); ok {
+		e.nonTerm.Add(t)
 	}
 
-	p.st.push(ele{index: p.current, nonTerm: tree})
+	p.st.push(ele{index: p.current, nonTerm: t})
 	isMatch := f()
-	// don't pop if it's the last element
+	// don't pop the first production - the root
 	if len(p.st) > 1 {
 		p.st.pop()
 	}
 
 	if !isMatch {
-		p.st.peek().nonTerm.Detach(tree)
-		p.Backtrack()
+		// detach t from the last non-terminal that
+		// was expanded
+		e, _ := p.st.peek()
+		e.nonTerm.Detach(t)
+		p.current = e.index
 	}
 	return isMatch
 }
 
-func (p Parser) Tree() *t.Tree {
-	if p.st.isEmpty() {
-		return nil
+// Tree retrieves the parse tree for the last production.
+func (p Parser) Tree() *types.Tree {
+	if e, ok := p.st.peek(); ok {
+		return e.nonTerm
 	}
-	return p.st.peek().nonTerm
+	return nil
 }
-
-/*
-func main() {
-	p := NewParser([]string{"a", "f", "h"})
-
-	p.Register("A", func() bool {
-		if p.Match("a") &&
-			p.Match("B") &&
-			p.Match("c") {
-			return true
-		}
-		return p.Match("E")
-	})
-
-	p.Register("B", func() bool {
-		return p.Match("f") && p.Match("g")
-	})
-
-	p.Register("E", func() bool {
-		return p.Match("a") && p.Match("F")
-	})
-
-	p.Register("F", func() bool {
-		return p.Match("f") && p.Match("h")
-	})
-
-	fmt.Println(p.Match("A"))
-	tree := p.st.pop().nonTerm
-	b, _ := json.MarshalIndent(tree, "", "  ")
-	fmt.Println(string(b))
-}
-
-*/
