@@ -39,8 +39,7 @@ import (
 	"regexp"
 
 	"github.com/DiSiqueira/GoTree"
-	"github.com/shivammg/parsers/rd"
-	"github.com/shivammg/parsers/types"
+	"github.com/shivamMg/rd"
 )
 
 // Non-terminals
@@ -277,12 +276,12 @@ func main() {
 	print(p.Tree())
 }
 
-func print(t *types.Tree) {
+func print(t *rd.Tree) {
 	goTree := createGoTree(t)
 	fmt.Println(goTree.Print())
 }
 
-func createGoTree(root *types.Tree) gotree.Tree {
+func createGoTree(root *rd.Tree) gotree.Tree {
 	t := gotree.New(root.Symbol)
 	for _, c := range root.Children {
 		ct := createGoTree(c)

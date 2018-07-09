@@ -1,12 +1,8 @@
 package rd
 
-import (
-	"github.com/shivammg/parsers/types"
-)
-
 type ele struct {
 	index   int
-	nonTerm *types.Tree
+	nonTerm *Tree
 }
 
 // stack stores trees as non-terminals are expanded. index stores
@@ -98,7 +94,7 @@ func (p *Parser) Retract() {
 // being expanded.
 func (p *Parser) Add(term string) {
 	e, _ := p.st.peek()
-	e.nonTerm.Add(types.NewTree(term))
+	e.nonTerm.Add(NewTree(term))
 }
 
 // Match first makes out if symbol is a terminal or a non-terminal - by checking
@@ -126,7 +122,7 @@ func (p *Parser) Match(symbol string) bool {
 	}
 
 	// it's a non-terminal
-	t := types.NewTree(symbol)
+	t := NewTree(symbol)
 	// if it's not the first production attach t
 	// to the last non-terminal that was expanded
 	if e, ok := p.st.peek(); ok {
@@ -151,7 +147,7 @@ func (p *Parser) Match(symbol string) bool {
 }
 
 // Tree retrieves the parse tree for the last production.
-func (p Parser) Tree() *types.Tree {
+func (p Parser) Tree() *Tree {
 	if e, ok := p.st.peek(); ok {
 		return e.nonTerm
 	}

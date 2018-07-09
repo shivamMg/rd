@@ -1,4 +1,4 @@
-package types
+package rd
 
 // Tree represents a parse tree.
 type Tree struct {
