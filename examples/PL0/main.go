@@ -38,9 +38,34 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/DiSiqueira/GoTree"
+	"github.com/shivamMg/ppds/tree"
 	"github.com/shivamMg/rd"
 )
+
+type node struct {
+	data string
+	c []*node
+}
+
+func (n *node) Data() interface{} {
+	return n.data
+}
+
+func (n *node) Children() (c []tree.Node) {
+	for _, child := range n.c {
+		c = append(c, tree.Node(child))
+	}
+	return
+}
+
+func convert(t *rd.Tree) *node {
+	n := new(node)
+	n.data = t.Symbol
+	for _, c := range t.Children {
+		n.c = append(n.c, convert(c))
+	}
+	return n
+}
 
 // Non-terminals
 const (
@@ -277,15 +302,7 @@ func main() {
 }
 
 func print(t *rd.Tree) {
-	goTree := createGoTree(t)
-	fmt.Println(goTree.Print())
+	root := convert(t)
+	tree.PrintHrn(root)
 }
 
-func createGoTree(root *rd.Tree) gotree.Tree {
-	t := gotree.New(root.Symbol)
-	for _, c := range root.Children {
-		ct := createGoTree(c)
-		t.AddTree(ct)
-	}
-	return t
-}
