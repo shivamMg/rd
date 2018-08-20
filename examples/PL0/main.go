@@ -133,6 +133,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println(primeProgram())
 	p := rd.NewParser(primeProgram())
 
 	p.Rule(Program, func() bool {
