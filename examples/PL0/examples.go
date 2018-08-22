@@ -52,7 +52,7 @@ begin
 	while arg < max do
 	begin
 		call isprime;
-		if ret = 1 then write arg;
+		if ret = 1 then ! arg;
 		arg := arg + 1
 	end
 end;
