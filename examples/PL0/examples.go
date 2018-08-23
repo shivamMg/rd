@@ -1,13 +1,8 @@
 // Examples copied from https://en.wikipedia.org/wiki/PL/0#Examples
 package main
 
-import (
-	"strings"
-	"github.com/alecthomas/chroma"
-)
-
-func squareProgram() (tokens []string) {
-	code := `VAR x, squ;
+const (
+	squareProgram = `VAR x, squ;
 
 PROCEDURE square;
 BEGIN
@@ -23,11 +18,7 @@ BEGIN
       x := x + 1
    END
 END.`
-	return lex(code)
-}
-
-func primeProgram() (tokens []string) {
-	code := `const max = 100;
+	primeProgram = `const max = 100;
 var arg, ret;
 
 procedure isprime;
@@ -59,18 +50,4 @@ end;
 
 call primes
 .`
-	return lex(code)
-}
-
-func lex(code string) (tokens []string) {
-	iter, err := Lexer.Tokenise(nil, code)
-	if err != nil {
-		panic(err)
-	}
-	for _, token := range iter.Tokens() {
-		if token.Type != chroma.Text {
-			tokens = append(tokens, strings.ToLower(token.Value))
-		}
-	}
-	return tokens
-}
+)

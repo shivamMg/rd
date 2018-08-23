@@ -1,15 +1,16 @@
-package main
+package lexer
 
 import (
 	"github.com/alecthomas/chroma"
+	"strings"
 )
 
-var Lexer = chroma.MustNewLexer(
+var lexer = chroma.MustNewLexer(
 	&chroma.Config{
-		Name: "PL0",
-		Aliases: []string{"pl0"},
-		Filenames: []string{"*.pl0"},
-		MimeTypes: []string{"text/x-pl0src"},
+		Name:            "PL0",
+		Aliases:         []string{"pl0"},
+		Filenames:       []string{"*.pl0"},
+		MimeTypes:       []string{"text/x-pl0src"},
 		CaseInsensitive: true,
 	},
 	chroma.Rules{
@@ -27,3 +28,15 @@ var Lexer = chroma.MustNewLexer(
 	},
 )
 
+func Lex(code string) (tokens []string) {
+	iter, err := lexer.Tokenise(nil, code)
+	if err != nil {
+		panic(err)
+	}
+	for _, token := range iter.Tokens() {
+		if token.Type != chroma.Text {
+			tokens = append(tokens, strings.ToLower(token.Value))
+		}
+	}
+	return tokens
+}
