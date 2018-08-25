@@ -33,10 +33,12 @@ func Lex(code string) (tokens []string) {
 	if err != nil {
 		panic(err)
 	}
-	for _, token := range iter.Tokens() {
+	token := iter()
+	for token != nil {
 		if token.Type != chroma.Text {
 			tokens = append(tokens, strings.ToLower(token.Value))
 		}
+		token = iter()
 	}
 	return tokens
 }
