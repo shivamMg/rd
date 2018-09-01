@@ -1,5 +1,7 @@
 package rd
 
+import "fmt"
+
 type ele struct {
 	index   int
 	nonTerm *Tree
@@ -34,116 +36,89 @@ func (st *stack) push(e ele) {
 
 // Parser represents a Recursive Descent parser.
 type Parser struct {
-	// Stores tokens tokens.
-	tokens  []string
+	tokens  []Token
 	st      stack
 	current int
-	rules   map[string]func() bool
 }
 
 // NewParser returns a new Parser to parse tokens. Production functions
 // for non-terminals must be added using Rule method.
-func NewParser(tokens []string) *Parser {
+func NewParser(tokens []Token) *Parser {
 	return &Parser{
 		tokens:  tokens,
 		st:      stack{},
 		current: -1,
-		rules:   make(map[string]func() bool),
 	}
-}
-
-// Rule saves a production function for a non-terminal.
-func (p *Parser) Rule(nonTerm string, f func() bool) {
-	p.rules[nonTerm] = f
-}
-
-// Reset resets parser p to parse newer tokens.
-func (p *Parser) Reset(tokens []string) {
-	p.tokens = tokens
-	p.st = stack{}
-	p.current = -1
-}
-
-// CurrentIndex returns the current token's index.
-func (p Parser) CurrentIndex() int {
-	return p.current
-}
-
-// Current returns the token where we are currently at.
-func (p *Parser) Current() string {
-	return p.tokens[p.current]
 }
 
 // NextToken returns next token from after incrementing the
 // current index. bool signifies if tokens are finished.
-func (p *Parser) NextToken() (string, bool) {
-	if p.current >= len(p.tokens)-1 {
-		return "", false
+func (p *Parser) Next() (token Token, ok bool) {
+	if p.current == len(p.tokens)-1 {
+		return nil, false
 	}
 	p.current++
 	return p.tokens[p.current], true
 }
 
-// Retract decrements the current index to bring current
-// to the previous token.
-func (p *Parser) Retract() {
-	p.current--
+func (p *Parser) Reset() {
+	e, ok := p.st.peek()
+	if !ok {
+		panic("can't reset")
+	}
+	p.current = e.index
 }
 
 // Add adds terminal token term to the non-terminal that is
 // being expanded.
-func (p *Parser) Add(term string) {
-	e, _ := p.st.peek()
-	e.nonTerm.Add(NewTree(term))
+func (p *Parser) Add(token Token) {
+	e, ok := p.st.peek()
+	if !ok {
+		panic("no non-terminal to attach to")
+	}
+	e.nonTerm.Add(NewTree(fmt.Sprint(token)))
 }
 
-// Match first makes out if symbol is a terminal or a non-terminal - by checking
-// if a production rule exists against it. If it's a terminal then it's matched by
-// the next token. If it's a non-terminal then the production function for it is
-// called.
-// Match also handles backtracking. In case of a terminal non-match, Retract is called.
-// In case of a failed non-terminal production, current is put to where it was before
-// the production.
-func (p *Parser) Match(symbol string) bool {
-	f, ok := p.rules[symbol]
+func (p *Parser) Match(token Token) (ok bool) {
+	next, ok := p.Next()
 	if !ok {
-		// it's a terminal
-		next, ok := p.NextToken()
-		if !ok {
-			p.Retract()
-			return false
-		}
-		if symbol != next {
-			p.Retract()
-			return false
-		}
-		p.Add(symbol)
-		return true
+		return false
 	}
-
-	// it's a non-terminal
-	t := NewTree(symbol)
-	// if it's not the first production attach t
-	// to the last non-terminal that was expanded
-	if e, ok := p.st.peek(); ok {
-		e.nonTerm.Add(t)
+	if token != next {
+		p.current--
+		return false
 	}
+	p.Add(token)
+	return true
+}
 
-	p.st.push(ele{index: p.current, nonTerm: t})
-	isMatch := f()
-	// don't pop the first production - the root
-	if len(p.st) > 1 {
-		p.st.pop()
+func (p *Parser) Enter(nonTerm string) {
+	fmt.Println("Enter", nonTerm)
+	t := NewTree(nonTerm)
+	p.st.push(ele{
+		index: p.current,
+		nonTerm: t,
+	})
+}
+
+func (p *Parser) Exit(result *bool) {
+	if result == nil {
+		panic("result cannot be nil")
 	}
-
-	if !isMatch {
-		// detach t from the last non-terminal that
-		// was expanded
-		e, _ := p.st.peek()
-		e.nonTerm.Detach(t)
+	e, ok := p.st.pop()
+	if !ok {
+		panic("nothing to pop")
+	}
+	if !*result {
 		p.current = e.index
+	} else {
+		parent, ok := p.st.peek()
+		if !ok {
+			panic("nothing to peek")
+		}
+		parent.nonTerm.Add(e.nonTerm)
 	}
-	return isMatch
+	fmt.Println("Exit", e.nonTerm.Symbol)
 }
 
 // Tree retrieves the parse tree for the last production.

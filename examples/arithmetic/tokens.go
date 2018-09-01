@@ -1,23 +1,13 @@
 package main
 
-//go:generate stringer -type Token -linecomment
-
 type Token int
 
 const (
-	Plus       Token = iota // +
-	Minus                   // -
-	Mul                     // *
-	Div                     // /
-	OpenParen               // (
-	CloseParen              // )
+	Plus       = "+"
+	Minus      = "-"
+	Star       = "*"
+	Slash      = "/"
+	OpenParen  = "("
+	CloseParen = ")"
+	Epsilon    = "ε"
 )
-
-var TokenStrings = map[string]Token{
-	Plus.String():       Plus,
-	Minus.String():      Minus,
-	Mul.String():        Mul,
-	Div.String():        Div,
-	OpenParen.String():  OpenParen,
-	CloseParen.String(): CloseParen,
-}

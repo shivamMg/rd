@@ -24,7 +24,7 @@ var lexer = chroma.MustNewLexer(
 	},
 )
 
-func lex(expr string) (tokens []rd.Token, err error) {
+func Lex(expr string) (tokens []rd.Token, err error) {
 	iter, err := lexer.Tokenise(nil, expr)
 	if err != nil {
 		return nil, err
@@ -32,11 +32,7 @@ func lex(expr string) (tokens []rd.Token, err error) {
 	token := iter()
 	for token != nil {
 		switch token.Type {
-		case chroma.Operator:
-			fallthrough
-		case chroma.Punctuation:
-			tokens = append(tokens, TokenStrings[token.Value])
-		case chroma.Number:
+		case chroma.Operator, chroma.Punctuation, chroma.Number:
 			tokens = append(tokens, token.Value)
 		case chroma.Error:
 			return nil, errors.New("invalid token")
@@ -48,7 +44,7 @@ func lex(expr string) (tokens []rd.Token, err error) {
 
 func main() {
 	expr := "2.8+ (3 - .733)/ 23"
-	tokens, err := lex(expr)
+	tokens, err := Lex(expr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,4 +52,6 @@ func main() {
 	for _, token := range tokens {
 		fmt.Println(token)
 	}
+	fmt.Println("parsing")
+	Parse(tokens)
 }
