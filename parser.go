@@ -1,6 +1,20 @@
 package rd
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"os"
+	"strings"
+)
+
+const (
+	BoxVer      = "│"
+	BoxHor      = "─"
+	BoxVerRight = "├"
+	BoxUpRight  = "└"
+)
+
+var logger = log.New(os.Stdout, "", 0)
 
 type ele struct {
 	index   int
@@ -39,6 +53,8 @@ type Parser struct {
 	tokens  []Token
 	st      stack
 	current int
+	// left padding for logs
+	padding int
 }
 
 // NewParser returns a new Parser to parse tokens. Production functions
@@ -48,7 +64,42 @@ func NewParser(tokens []Token) *Parser {
 		tokens:  tokens,
 		st:      stack{},
 		current: -1,
+		padding: 0,
 	}
+}
+
+func (p *Parser) Logf(format string, v ...interface{}) {
+	prefix := strings.Repeat(BoxVer+" ", p.padding)
+	newV := []interface{}{prefix}
+	newV = append(newV, v...)
+	logger.Printf("%s"+format, newV...)
+}
+
+func (p *Parser) matchLogf(format string, v ...interface{}) {
+	prefix := ""
+	if p.padding > 0 {
+		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		prefix += BoxVerRight + " "
+	}
+	newV := []interface{}{prefix}
+	newV = append(newV, v...)
+	format = "%s"+format
+	logger.Printf(format, newV...)
+}
+
+func (p *Parser) enterLogf(format string, v ...interface{}) {
+	prefix := ""
+	if p.padding > 0 {
+		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		prefix += BoxVerRight
+	}
+	newV := []interface{}{prefix}
+	newV = append(newV, v...)
+	if p.padding > 0 {
+		format = BoxHor +  format
+	}
+	format = "%s"+format
+	logger.Printf(format, newV...)
 }
 
 // NextToken returns next token from after incrementing the
@@ -82,23 +133,27 @@ func (p *Parser) Add(token Token) {
 func (p *Parser) Match(token Token) (ok bool) {
 	next, ok := p.Next()
 	if !ok {
+		p.matchLogf("nomatch(%v) - no tokens left\n", token)
 		return false
 	}
 	if token != next {
 		p.current--
+		p.matchLogf("nomatch(%v,%v)\n", token, next)
 		return false
 	}
 	p.Add(token)
+	p.matchLogf("match(%v)\n", token)
 	return true
 }
 
 func (p *Parser) Enter(nonTerm string) {
-	fmt.Println("Enter", nonTerm)
 	t := NewTree(nonTerm)
 	p.st.push(ele{
-		index: p.current,
+		index:   p.current,
 		nonTerm: t,
 	})
+	p.enterLogf("enter(%s)\n", nonTerm)
+	p.padding++
 }
 
 func (p *Parser) Exit(result *bool) {
@@ -111,14 +166,11 @@ func (p *Parser) Exit(result *bool) {
 	}
 	if !*result {
 		p.current = e.index
-	} else {
-		parent, ok := p.st.peek()
-		if !ok {
-			panic("nothing to peek")
-		}
+	} else if parent, ok := p.st.peek(); ok{
 		parent.nonTerm.Add(e.nonTerm)
 	}
-	fmt.Println("Exit", e.nonTerm.Symbol)
+	p.padding--
+	p.Logf("exit(%t)\n", *result)
 }
 
 // Tree retrieves the parse tree for the last production.

@@ -23,8 +23,9 @@ LL(1) grammar (factored and without recursion). Needs single lookahead.
 package main
 
 import (
-	"github.com/shivamMg/rd"
 	"fmt"
+	"github.com/shivamMg/rd"
+	"reflect"
 )
 
 var p P
@@ -65,7 +66,7 @@ func SubExpr() (ok bool) {
 }
 
 func Term() (ok bool) {
-	p.Enter("TermExpr")
+	p.Enter("Term")
 	defer p.Exit(&ok)
 
 	if Factor() && MulExpr() {
@@ -115,7 +116,7 @@ func Factor() (ok bool) {
 }
 
 func Number() (ok bool) {
-	p.Enter("Factor")
+	p.Enter("Number")
 	defer p.Exit(&ok)
 
 	token, ok := p.Next()
@@ -123,10 +124,11 @@ func Number() (ok bool) {
 		return false
 	}
 	switch token.(type) {
-	case int, float64:
+	case int64, float64:
 		p.Add(token)
 		return true
 	}
+	fmt.Println("#Number", token, reflect.TypeOf(token))
 	p.Reset()
 	return false
 }
@@ -137,7 +139,6 @@ func Parse(tokens []rd.Token) (*rd.Tree, error) {
 	fmt.Println(ok)
 	return nil, nil
 }
-
 
 type P interface {
 	// returns false if no tokens left to match

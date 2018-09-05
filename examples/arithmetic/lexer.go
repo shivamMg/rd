@@ -8,6 +8,7 @@ import (
 
 	"github.com/alecthomas/chroma"
 	"github.com/shivamMg/rd"
+	"strconv"
 )
 
 var lexer = chroma.MustNewLexer(
@@ -19,7 +20,8 @@ var lexer = chroma.MustNewLexer(
 			{`\s+`, chroma.Text, nil},
 			{`[+\-*/]`, chroma.Operator, nil},
 			{`[()]`, chroma.Punctuation, nil},
-			{`(\d*\.\d+|\d+)`, chroma.Number, nil},
+			{`\d*\.\d+`, chroma.NumberFloat, nil},
+			{`\d+`, chroma.NumberInteger, nil},
 		},
 	},
 )
@@ -32,8 +34,20 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 	token := iter()
 	for token != nil {
 		switch token.Type {
-		case chroma.Operator, chroma.Punctuation, chroma.Number:
+		case chroma.Operator, chroma.Punctuation:
 			tokens = append(tokens, token.Value)
+		case chroma.NumberInteger:
+			num, err := strconv.ParseInt(token.Value, 10, 64)
+			if err != nil {
+				return nil, errors.New("token couldn't be converted to 64bit decimal")
+			}
+			tokens = append(tokens, num)
+		case chroma.NumberFloat:
+			num, err := strconv.ParseFloat(token.Value, 64)
+			if err != nil {
+				return nil, errors.New("token couldn't be converted to 64bit float")
+			}
+			tokens = append(tokens, num)
 		case chroma.Error:
 			return nil, errors.New("invalid token")
 		}
@@ -43,7 +57,8 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 }
 
 func main() {
-	expr := "2.8+ (3 - .733)/ 23"
+	// expr := "2.8+ (3 - .733)/ 23"
+	expr := "2 + 3"
 	tokens, err := Lex(expr)
 	if err != nil {
 		log.Fatal(err)
