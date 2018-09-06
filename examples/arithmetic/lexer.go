@@ -2,10 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
-
-	"fmt"
-
 	"github.com/alecthomas/chroma"
 	"github.com/shivamMg/rd"
 	"strconv"
@@ -54,19 +50,4 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 		token = iter()
 	}
 	return
-}
-
-func main() {
-	// expr := "2.8+ (3 - .733)/ 23"
-	expr := "2 + 3"
-	tokens, err := Lex(expr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%q\n", expr)
-	for _, token := range tokens {
-		fmt.Println(token)
-	}
-	fmt.Println("parsing")
-	Parse(tokens)
 }

@@ -61,7 +61,7 @@ func (n *node) Children() (c []tree.Node) {
 func convert(t *rd.Tree) *node {
 	n := new(node)
 	n.data = t.Symbol
-	for _, c := range t.Children {
+	for _, c := range t.Subtrees {
 		n.c = append(n.c, convert(c))
 	}
 	return n

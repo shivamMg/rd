@@ -23,51 +23,51 @@ func TestArithGrammar(test *testing.T) {
 	*/
 	wantJSON := `{
 		"Symbol": "E",
-		"Children": [
+		"Subtrees": [
 			{
 				"Symbol": "T",
-				"Children": [
+				"Subtrees": [
 					{
 						"Symbol": "F",
-						"Children": [
+						"Subtrees": [
 							{
 								"Symbol": "(",
-								"Children": null
+								"Subtrees": null
 							},
 							{
 								"Symbol": "E",
-								"Children": [
+								"Subtrees": [
 									{
 										"Symbol": "T",
-										"Children": [
+										"Subtrees": [
 											{
 												"Symbol": "F",
-												"Children": [
+												"Subtrees": [
 													{
 														"Symbol": "id",
-														"Children": null
+														"Subtrees": null
 													}
 												]
 											},
 											{
 												"Symbol": "T'",
-												"Children": [
+												"Subtrees": [
 													{
 														"Symbol": "*",
-														"Children": null
+														"Subtrees": null
 													},
 													{
 														"Symbol": "F",
-														"Children": [
+														"Subtrees": [
 															{
 																"Symbol": "id",
-																"Children": null
+																"Subtrees": null
 															}
 														]
 													},
 													{
 														"Symbol": "T'",
-														"Children": null
+														"Subtrees": null
 													}
 												]
 											}
@@ -75,50 +75,50 @@ func TestArithGrammar(test *testing.T) {
 									},
 									{
 										"Symbol": "E'",
-										"Children": null
+										"Subtrees": null
 									}
 								]
 							},
 							{
 								"Symbol": ")",
-								"Children": null
+								"Subtrees": null
 							}
 						]
 					},
 					{
 						"Symbol": "T'",
-						"Children": null
+						"Subtrees": null
 					}
 				]
 			},
 			{
 				"Symbol": "E'",
-				"Children": [
+				"Subtrees": [
 					{
 						"Symbol": "+",
-						"Children": null
+						"Subtrees": null
 					},
 					{
 						"Symbol": "T",
-						"Children": [
+						"Subtrees": [
 							{
 								"Symbol": "F",
-								"Children": [
+								"Subtrees": [
 									{
 										"Symbol": "id",
-										"Children": null
+										"Subtrees": null
 									}
 								]
 							},
 							{
 								"Symbol": "T'",
-								"Children": null
+								"Subtrees": null
 							}
 						]
 					},
 					{
 						"Symbol": "E'",
-						"Children": null
+						"Subtrees": null
 					}
 				]
 			}

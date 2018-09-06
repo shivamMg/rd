@@ -5,14 +5,28 @@ import (
 	"log"
 	"os"
 	"strings"
+	"github.com/shivamMg/ppds/tree"
 )
 
 const (
 	BoxVer      = "│"
 	BoxHor      = "─"
 	BoxVerRight = "├"
-	BoxUpRight  = "└"
 )
+
+type P interface {
+	// returns false if no tokens left to match
+	Match(token Token) (ok bool)
+	// ok is false if no token left
+	Next() (token Token, ok bool)
+	// panics if no node to attach token (empty stack)
+	// always returns true
+	Add(token Token)
+	Reset()
+	Enter(nonTerm string)
+	Exit(result *bool)
+	Tree() *Tree
+}
 
 var logger = log.New(os.Stdout, "", 0)
 
@@ -55,20 +69,25 @@ type Parser struct {
 	current int
 	// left padding for logs
 	padding int
+	log     bool
 }
 
 // NewParser returns a new Parser to parse tokens. Production functions
 // for non-terminals must be added using Rule method.
-func NewParser(tokens []Token) *Parser {
+func NewParser(tokens []Token, log bool) *Parser {
 	return &Parser{
 		tokens:  tokens,
 		st:      stack{},
 		current: -1,
 		padding: 0,
+		log: log,
 	}
 }
 
 func (p *Parser) Logf(format string, v ...interface{}) {
+	if !p.log {
+		return
+	}
 	prefix := strings.Repeat(BoxVer+" ", p.padding)
 	newV := []interface{}{prefix}
 	newV = append(newV, v...)
@@ -76,6 +95,9 @@ func (p *Parser) Logf(format string, v ...interface{}) {
 }
 
 func (p *Parser) matchLogf(format string, v ...interface{}) {
+	if !p.log {
+		return
+	}
 	prefix := ""
 	if p.padding > 0 {
 		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
@@ -88,6 +110,9 @@ func (p *Parser) matchLogf(format string, v ...interface{}) {
 }
 
 func (p *Parser) enterLogf(format string, v ...interface{}) {
+	if !p.log {
+		return
+	}
 	prefix := ""
 	if p.padding > 0 {
 		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
@@ -160,13 +185,18 @@ func (p *Parser) Exit(result *bool) {
 	if result == nil {
 		panic("result cannot be nil")
 	}
-	e, ok := p.st.pop()
-	if !ok {
-		panic("nothing to pop")
+	var e ele
+	var ok bool
+	// don't pop root
+	if len(p.st) > 1 {
+		e, ok = p.st.pop()
+		if !ok {
+			panic("nothing to pop")
+		}
 	}
 	if !*result {
 		p.current = e.index
-	} else if parent, ok := p.st.peek(); ok{
+	} else if parent, ok := p.st.peek(); ok && len(p.st) > 0 {
 		parent.nonTerm.Add(e.nonTerm)
 	}
 	p.padding--
@@ -179,4 +209,8 @@ func (p Parser) Tree() *Tree {
 		return e.nonTerm
 	}
 	return nil
+}
+
+func (p *Parser) PrintTree() {
+	tree.PrintHrn(p.Tree())
 }

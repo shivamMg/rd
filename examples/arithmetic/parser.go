@@ -23,12 +23,11 @@ LL(1) grammar (factored and without recursion). Needs single lookahead.
 package main
 
 import (
-	"fmt"
+	"errors"
 	"github.com/shivamMg/rd"
-	"reflect"
 )
 
-var p P
+var p rd.P
 
 func Expr() (ok bool) {
 	p.Enter("Expr")
@@ -128,27 +127,15 @@ func Number() (ok bool) {
 		p.Add(token)
 		return true
 	}
-	fmt.Println("#Number", token, reflect.TypeOf(token))
 	p.Reset()
 	return false
 }
 
-func Parse(tokens []rd.Token) (*rd.Tree, error) {
-	p = rd.NewParser(tokens)
-	ok := Expr()
-	fmt.Println(ok)
-	return nil, nil
-}
-
-type P interface {
-	// returns false if no tokens left to match
-	Match(token rd.Token) (ok bool)
-	// ok is false if no token left
-	Next() (token rd.Token, ok bool)
-	// panics if no node to attach token (empty stack)
-	// always returns true
-	Add(token rd.Token)
-	Reset()
-	Enter(nonTerm string)
-	Exit(result *bool)
+func Parse(tokens []rd.Token) (*rd.Parser, error) {
+	parser := rd.NewParser(tokens, true)
+	p = parser
+	if ok := Expr(); !ok {
+		return nil, errors.New("parsing failed")
+	}
+	return parser, nil
 }
