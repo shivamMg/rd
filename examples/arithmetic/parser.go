@@ -1,9 +1,4 @@
 /*
-Grammar with left recursion. Not suitable for RD parsing.
-	Expr   = Expr "+" Term | Expr "-" Term | Term
-	Term   = Term "*" Factor | Term "/" Factor | Factor
-	Factor = "(" Expr ")" | "-" Factor | Number
-
 Grammar without left recursion. Needs arbitrary lookahead.
 	Expr    = Term AddExpr | Term SubExpr
 	AddExpr = "+" Expr | ε
@@ -12,13 +7,6 @@ Grammar without left recursion. Needs arbitrary lookahead.
 	MulExpr = "*" Term | ε
 	DivExpr = "/" Term | ε
 	Factor  = "(" Expr ")" | "-" Factor | Number
-
-LL(1) grammar (factored and without recursion). Needs single lookahead.
-	Expr   = Term Expr'
-	Expr'  = "+" Expr | "-" Expr | ε
-	Term   = Factor Term'
-	Term'  = "*" Term | "/" Term | ε
-	Factor = "(" Expr ")" | "-" Factor | Number
 */
 package main
 

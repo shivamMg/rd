@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"github.com/shivamMg/ppds/tree"
 )
 
 const (
 	BoxVer      = "│"
+	BoxVerDashed = "┆"
 	BoxHor      = "─"
+	BoxHorDashed = "┄"
 	BoxVerRight = "├"
 )
 
@@ -84,11 +85,23 @@ func NewParser(tokens []Token, log bool) *Parser {
 	}
 }
 
+func repeat(times int) (s string) {
+	for i := 0; i < times; i++ {
+		if i % 2 == 0 {
+			s += BoxVer + " "
+		} else {
+			s += BoxVerDashed + " "
+		}
+	}
+	return s
+}
+
 func (p *Parser) Logf(format string, v ...interface{}) {
 	if !p.log {
 		return
 	}
-	prefix := strings.Repeat(BoxVer+" ", p.padding)
+	// prefix := strings.Repeat(BoxVer+" ", p.padding)
+	prefix := repeat(p.padding)
 	newV := []interface{}{prefix}
 	newV = append(newV, v...)
 	logger.Printf("%s"+format, newV...)
@@ -100,7 +113,8 @@ func (p *Parser) matchLogf(format string, v ...interface{}) {
 	}
 	prefix := ""
 	if p.padding > 0 {
-		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		// prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		prefix = repeat(p.padding-1)
 		prefix += BoxVerRight + " "
 	}
 	newV := []interface{}{prefix}
@@ -115,13 +129,18 @@ func (p *Parser) enterLogf(format string, v ...interface{}) {
 	}
 	prefix := ""
 	if p.padding > 0 {
-		prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		// prefix = strings.Repeat(BoxVer+" ", p.padding-1)
+		prefix = repeat(p.padding-1)
 		prefix += BoxVerRight
 	}
 	newV := []interface{}{prefix}
 	newV = append(newV, v...)
 	if p.padding > 0 {
-		format = BoxHor +  format
+		if p.padding % 2 == 0 {
+			format = BoxHorDashed +  format
+		} else {
+			format = BoxHor +  format
+		}
 	}
 	format = "%s"+format
 	logger.Printf(format, newV...)
@@ -143,6 +162,7 @@ func (p *Parser) Reset() {
 		panic("can't reset")
 	}
 	p.current = e.index
+	e.nonTerm.Subtrees = []*Tree{}
 }
 
 // Add adds terminal token term to the non-terminal that is
@@ -158,16 +178,16 @@ func (p *Parser) Add(token Token) {
 func (p *Parser) Match(token Token) (ok bool) {
 	next, ok := p.Next()
 	if !ok {
-		p.matchLogf("nomatch(%v) - no tokens left\n", token)
+		p.matchLogf("%v ≠ <no tokens left>\n", token)
 		return false
 	}
 	if token != next {
 		p.current--
-		p.matchLogf("nomatch(%v,%v)\n", token, next)
+		p.matchLogf("%v ≠ %v\n", next, token)
 		return false
 	}
 	p.Add(token)
-	p.matchLogf("match(%v)\n", token)
+	p.matchLogf("%v = %v\n", token, token)
 	return true
 }
 
@@ -177,7 +197,7 @@ func (p *Parser) Enter(nonTerm string) {
 		index:   p.current,
 		nonTerm: t,
 	})
-	p.enterLogf("enter(%s)\n", nonTerm)
+	p.enterLogf("%s\n", nonTerm)
 	p.padding++
 }
 
@@ -200,7 +220,7 @@ func (p *Parser) Exit(result *bool) {
 		parent.nonTerm.Add(e.nonTerm)
 	}
 	p.padding--
-	p.Logf("exit(%t)\n", *result)
+	p.Logf("%t\n", *result)
 }
 
 // Tree retrieves the parse tree for the last production.
