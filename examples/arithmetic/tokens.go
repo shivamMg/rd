@@ -1,7 +1,5 @@
 package main
 
-type Token int
-
 const (
 	Plus       = "+"
 	Minus      = "-"

@@ -6,18 +6,16 @@ import (
 )
 
 func main() {
-	expr := "2.8+ (3 - .733)/ 23"
-	// expr := "2 - 3"
+	expr := "2.8 + (3 - .733) / 23"
 	tokens, err := Lex(expr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%q\n", expr)
-	fmt.Println(tokens)
-	p, err := Parse(tokens)
+	fmt.Println("Tokens:", tokens)
+	parseTree, err := Parse(tokens)
 	if err != nil {
 		log.Fatal(err)
 	}
-	p.PrintTree()
-	// b.PrintFlowTree()
+	fmt.Println("Parse tree:")
+	parseTree.Print()
 }

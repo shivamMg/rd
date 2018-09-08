@@ -50,3 +50,11 @@ func (t *Tree) Detach(newSubtree *Tree) {
 		}
 	}
 }
+
+func (t *Tree) Sprint() string {
+	return tree.SprintHrn(t)
+}
+
+func (t *Tree) Print() {
+	tree.PrintHrn(t)
+}

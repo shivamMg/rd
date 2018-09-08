@@ -185,6 +185,3 @@ func (b Builder) Tree() *Tree {
 	return nil
 }
 
-func (b *Builder) PrintTree() {
-	tree.PrintHrn(b.Tree())
-}

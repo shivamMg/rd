@@ -11,10 +11,16 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
+
 	"github.com/shivamMg/rd"
 )
 
-var b *rd.Builder
+var (
+	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
+	b           *rd.Builder
+)
 
 func Expr() (ok bool) {
 	b.Enter("Expr")
@@ -79,8 +85,7 @@ func Number() (ok bool) {
 	if !ok {
 		return false
 	}
-	switch token.(type) {
-	case int64, float64:
+	if numberRegex.MatchString(fmt.Sprint(token)) {
 		b.Add(token)
 		return true
 	}
@@ -88,10 +93,10 @@ func Number() (ok bool) {
 	return false
 }
 
-func Parse(tokens []rd.Token) (*rd.Builder, error) {
+func Parse(tokens []rd.Token) (parseTree *rd.Tree, err error) {
 	b = rd.NewBuilder(tokens)
 	if ok := Expr(); !ok {
 		return nil, errors.New("parsing failed")
 	}
-	return b, nil
+	return b.Tree(), nil
 }

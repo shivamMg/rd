@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+
 	"github.com/alecthomas/chroma"
 	"github.com/shivamMg/rd"
-	"strconv"
 )
 
 var lexer = chroma.MustNewLexer(
@@ -27,27 +27,13 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 	if err != nil {
 		return nil, err
 	}
-	token := iter()
-	for token != nil {
+	for _, token := range iter.Tokens() {
 		switch token.Type {
-		case chroma.Operator, chroma.Punctuation:
+		case chroma.Operator, chroma.Punctuation, chroma.NumberInteger, chroma.NumberFloat:
 			tokens = append(tokens, token.Value)
-		case chroma.NumberInteger:
-			num, err := strconv.ParseInt(token.Value, 10, 64)
-			if err != nil {
-				return nil, errors.New("token couldn't be converted to 64bit decimal")
-			}
-			tokens = append(tokens, num)
-		case chroma.NumberFloat:
-			num, err := strconv.ParseFloat(token.Value, 64)
-			if err != nil {
-				return nil, errors.New("token couldn't be converted to 64bit float")
-			}
-			tokens = append(tokens, num)
 		case chroma.Error:
 			return nil, errors.New("invalid token")
 		}
-		token = iter()
 	}
-	return
+	return tokens, nil
 }
