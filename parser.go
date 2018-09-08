@@ -7,13 +7,6 @@ import (
 	"github.com/shivamMg/ppds/tree"
 )
 
-const (
-	BoxVer      = "│"
-	BoxVerDashed = "┆"
-	BoxHor      = "─"
-	BoxHorDashed = "┄"
-	BoxVerRight = "├"
-)
 
 type P interface {
 	// returns false if no tokens left to match
@@ -28,6 +21,30 @@ type P interface {
 	Exit(result *bool)
 	Tree() *Tree
 }
+
+type flowTree struct {
+	data string
+	children []*flowTree
+}
+
+func NewFlowTree(data string) *flowTree {
+	return &flowTree{
+		data: data,
+		children: []*flowTree{},
+	}
+}
+
+func (ft *flowTree) Data() interface{} {
+	return ft.data
+}
+
+func (ft *flowTree) Children() (c []tree.Node) {
+	for _, child := range ft.children {
+		c = append(c, child)
+	}
+	return
+}
+
 
 var logger = log.New(os.Stdout, "", 0)
 
@@ -68,9 +85,7 @@ type Parser struct {
 	tokens  []Token
 	st      stack
 	current int
-	// left padding for logs
-	padding int
-	log     bool
+	flowTreeStack []*flowTree
 }
 
 // NewParser returns a new Parser to parse tokens. Production functions
@@ -80,70 +95,11 @@ func NewParser(tokens []Token, log bool) *Parser {
 		tokens:  tokens,
 		st:      stack{},
 		current: -1,
-		padding: 0,
-		log: log,
 	}
 }
 
-func repeat(times int) (s string) {
-	for i := 0; i < times; i++ {
-		if i % 2 == 0 {
-			s += BoxVer + " "
-		} else {
-			s += BoxVerDashed + " "
-		}
-	}
-	return s
-}
-
-func (p *Parser) Logf(format string, v ...interface{}) {
-	if !p.log {
-		return
-	}
-	// prefix := strings.Repeat(BoxVer+" ", p.padding)
-	prefix := repeat(p.padding)
-	newV := []interface{}{prefix}
-	newV = append(newV, v...)
-	logger.Printf("%s"+format, newV...)
-}
-
-func (p *Parser) matchLogf(format string, v ...interface{}) {
-	if !p.log {
-		return
-	}
-	prefix := ""
-	if p.padding > 0 {
-		// prefix = strings.Repeat(BoxVer+" ", p.padding-1)
-		prefix = repeat(p.padding-1)
-		prefix += BoxVerRight + " "
-	}
-	newV := []interface{}{prefix}
-	newV = append(newV, v...)
-	format = "%s"+format
-	logger.Printf(format, newV...)
-}
-
-func (p *Parser) enterLogf(format string, v ...interface{}) {
-	if !p.log {
-		return
-	}
-	prefix := ""
-	if p.padding > 0 {
-		// prefix = strings.Repeat(BoxVer+" ", p.padding-1)
-		prefix = repeat(p.padding-1)
-		prefix += BoxVerRight
-	}
-	newV := []interface{}{prefix}
-	newV = append(newV, v...)
-	if p.padding > 0 {
-		if p.padding % 2 == 0 {
-			format = BoxHorDashed +  format
-		} else {
-			format = BoxHor +  format
-		}
-	}
-	format = "%s"+format
-	logger.Printf(format, newV...)
+func (p *Parser) PrintFlowTree() {
+	tree.PrintHrn(p.flowTreeStack[0])
 }
 
 // NextToken returns next token from after incrementing the
@@ -178,16 +134,22 @@ func (p *Parser) Add(token Token) {
 func (p *Parser) Match(token Token) (ok bool) {
 	next, ok := p.Next()
 	if !ok {
-		p.matchLogf("%v ≠ <no tokens left>\n", token)
+		ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+		data := fmt.Sprintf("%v ≠ <no tokens left>", token)
+		ft.children = append(ft.children, NewFlowTree(data))
 		return false
 	}
 	if token != next {
 		p.current--
-		p.matchLogf("%v ≠ %v\n", next, token)
+		ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+		data := fmt.Sprintf("%v ≠ %v", next, token)
+		ft.children = append(ft.children, NewFlowTree(data))
 		return false
 	}
 	p.Add(token)
-	p.matchLogf("%v = %v\n", token, token)
+	ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+	data := fmt.Sprintf("%v = %v", next, token)
+	ft.children = append(ft.children, NewFlowTree(data))
 	return true
 }
 
@@ -197,8 +159,8 @@ func (p *Parser) Enter(nonTerm string) {
 		index:   p.current,
 		nonTerm: t,
 	})
-	p.enterLogf("%s\n", nonTerm)
-	p.padding++
+	ft := NewFlowTree(nonTerm)
+	p.flowTreeStack = append(p.flowTreeStack, ft)
 }
 
 func (p *Parser) Exit(result *bool) {
@@ -214,13 +176,20 @@ func (p *Parser) Exit(result *bool) {
 			panic("nothing to pop")
 		}
 	}
+
+	ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+	ft.data += fmt.Sprintf("(%t)", *result)
+	if len(p.flowTreeStack) > 1 {
+		p.flowTreeStack = p.flowTreeStack[:len(p.flowTreeStack)-1]
+		last := p.flowTreeStack[len(p.flowTreeStack)-1]
+		last.children = append(last.children, ft)
+	}
+
 	if !*result {
 		p.current = e.index
 	} else if parent, ok := p.st.peek(); ok && len(p.st) > 0 {
 		parent.nonTerm.Add(e.nonTerm)
 	}
-	p.padding--
-	p.Logf("%t\n", *result)
 }
 
 // Tree retrieves the parse tree for the last production.
