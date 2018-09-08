@@ -72,7 +72,7 @@ func init() {
 }
 
 func Parse(tokens []string, start string) (ok bool, tree *rd.Tree) {
-	p := rd.NewParser(tokens)
+	p := rd.NewBuilder(tokens)
 
 	p.Rule(Program, func() bool {
 		return p.Match(Block) && p.Match(Period)

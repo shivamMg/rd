@@ -126,7 +126,7 @@ func TestArithGrammar(test *testing.T) {
 	}`
 	var want, got interface{}
 	json.Unmarshal([]byte(wantJSON), &want)
-	p := rd.NewParser([]string{"(", "id", "*", "id", ")", "+", "id"})
+	p := rd.NewBuilder([]string{"(", "id", "*", "id", ")", "+", "id"})
 
 	p.Rule("E", func() bool {
 		return p.Match("T") && p.Match("E'")
@@ -179,7 +179,7 @@ func TestArithGrammar(test *testing.T) {
 }
 
 func TestInvalidInput(test *testing.T) {
-	p := rd.NewParser([]string{"a", "c"})
+	p := rd.NewBuilder([]string{"a", "c"})
 
 	p.Rule("E", func() bool {
 		if p.Match("a") &&

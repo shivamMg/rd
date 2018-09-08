@@ -14,85 +14,84 @@ import (
 	"github.com/shivamMg/rd"
 )
 
-var p rd.P
+var b *rd.Builder
 
 func Expr() (ok bool) {
-	p.Enter("Expr")
-	defer p.Exit(&ok)
+	b.Enter("Expr")
+	defer b.Exit(&ok)
 
 	return Term() && ExprPrime()
 }
 
 func ExprPrime() (ok bool) {
-	p.Enter("Expr'")
-	defer p.Exit(&ok)
+	b.Enter("Expr'")
+	defer b.Exit(&ok)
 
-	if p.Match(Plus) {
+	if b.Match(Plus) {
 		return Expr()
 	}
-	if p.Match(Minus) {
+	if b.Match(Minus) {
 		return Expr()
 	}
-	p.Add(Epsilon)
+	b.Add(Epsilon)
 	return true
 }
 
 func Term() (ok bool) {
-	p.Enter("Term")
-	defer p.Exit(&ok)
+	b.Enter("Term")
+	defer b.Exit(&ok)
 
 	return Factor() && TermPrime()
 }
 
 func TermPrime() (ok bool) {
-	p.Enter("Term'")
-	defer p.Exit(&ok)
+	b.Enter("Term'")
+	defer b.Exit(&ok)
 
-	if p.Match(Star) {
+	if b.Match(Star) {
 		return Term()
 	}
-	if p.Match(Slash) {
+	if b.Match(Slash) {
 		return Term()
 	}
-	p.Add(Epsilon)
+	b.Add(Epsilon)
 	return true
 }
 
 func Factor() (ok bool) {
-	p.Enter("Factor")
-	defer p.Exit(&ok)
+	b.Enter("Factor")
+	defer b.Exit(&ok)
 
-	if p.Match(OpenParen) {
-		return Expr() && p.Match(CloseParen)
+	if b.Match(OpenParen) {
+		return Expr() && b.Match(CloseParen)
 	}
-	if p.Match(Minus) {
+	if b.Match(Minus) {
 		return Factor()
 	}
 	return Number()
 }
 
 func Number() (ok bool) {
-	p.Enter("Number")
-	defer p.Exit(&ok)
+	b.Enter("Number")
+	defer b.Exit(&ok)
 
-	token, ok := p.Next()
+	token, ok := b.Next()
 	if !ok {
 		return false
 	}
 	switch token.(type) {
 	case int64, float64:
-		p.Add(token)
+		b.Add(token)
 		return true
 	}
-	p.Reset()
+	b.Reset()
 	return false
 }
 
-func Parse(tokens []rd.Token) (*rd.Parser, error) {
-	parser := rd.NewParser(tokens, true)
-	p = parser
+func Parse(tokens []rd.Token) (*rd.Builder, error) {
+	b = rd.NewBuilder(tokens)
 	if ok := Expr(); !ok {
 		return nil, errors.New("parsing failed")
 	}
-	return parser, nil
+	return b, nil
 }

@@ -7,21 +7,6 @@ import (
 	"github.com/shivamMg/ppds/tree"
 )
 
-
-type P interface {
-	// returns false if no tokens left to match
-	Match(token Token) (ok bool)
-	// ok is false if no token left
-	Next() (token Token, ok bool)
-	// panics if no node to attach token (empty stack)
-	// always returns true
-	Add(token Token)
-	Reset()
-	Enter(nonTerm string)
-	Exit(result *bool)
-	Tree() *Tree
-}
-
 type flowTree struct {
 	data string
 	children []*flowTree
@@ -80,126 +65,126 @@ func (st *stack) push(e ele) {
 	*st = append(*st, e)
 }
 
-// Parser represents a Recursive Descent parser.
-type Parser struct {
+// Builder represents a Recursive Descent parser.
+type Builder struct {
 	tokens  []Token
 	st      stack
 	current int
 	flowTreeStack []*flowTree
 }
 
-// NewParser returns a new Parser to parse tokens. Production functions
+// NewBuilder returns a new Builder to parse tokens. Production functions
 // for non-terminals must be added using Rule method.
-func NewParser(tokens []Token, log bool) *Parser {
-	return &Parser{
+func NewBuilder(tokens []Token) *Builder {
+	return &Builder{
 		tokens:  tokens,
 		st:      stack{},
 		current: -1,
 	}
 }
 
-func (p *Parser) PrintFlowTree() {
-	tree.PrintHrn(p.flowTreeStack[0])
+func (b *Builder) PrintFlowTree() {
+	tree.PrintHrn(b.flowTreeStack[0])
 }
 
 // NextToken returns next token from after incrementing the
 // current index. bool signifies if tokens are finished.
-func (p *Parser) Next() (token Token, ok bool) {
-	if p.current == len(p.tokens)-1 {
+func (b *Builder) Next() (token Token, ok bool) {
+	if b.current == len(b.tokens)-1 {
 		return nil, false
 	}
-	p.current++
-	return p.tokens[p.current], true
+	b.current++
+	return b.tokens[b.current], true
 }
 
-func (p *Parser) Reset() {
-	e, ok := p.st.peek()
+func (b *Builder) Reset() {
+	e, ok := b.st.peek()
 	if !ok {
 		panic("can't reset")
 	}
-	p.current = e.index
+	b.current = e.index
 	e.nonTerm.Subtrees = []*Tree{}
 }
 
 // Add adds terminal token term to the non-terminal that is
 // being expanded.
-func (p *Parser) Add(token Token) {
-	e, ok := p.st.peek()
+func (b *Builder) Add(token Token) {
+	e, ok := b.st.peek()
 	if !ok {
 		panic("no non-terminal to attach to")
 	}
 	e.nonTerm.Add(NewTree(fmt.Sprint(token)))
 }
 
-func (p *Parser) Match(token Token) (ok bool) {
-	next, ok := p.Next()
+func (b *Builder) Match(token Token) (ok bool) {
+	next, ok := b.Next()
 	if !ok {
-		ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+		ft := b.flowTreeStack[len(b.flowTreeStack)-1]
 		data := fmt.Sprintf("%v ≠ <no tokens left>", token)
 		ft.children = append(ft.children, NewFlowTree(data))
 		return false
 	}
 	if token != next {
-		p.current--
-		ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+		b.current--
+		ft := b.flowTreeStack[len(b.flowTreeStack)-1]
 		data := fmt.Sprintf("%v ≠ %v", next, token)
 		ft.children = append(ft.children, NewFlowTree(data))
 		return false
 	}
-	p.Add(token)
-	ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+	b.Add(token)
+	ft := b.flowTreeStack[len(b.flowTreeStack)-1]
 	data := fmt.Sprintf("%v = %v", next, token)
 	ft.children = append(ft.children, NewFlowTree(data))
 	return true
 }
 
-func (p *Parser) Enter(nonTerm string) {
+func (b *Builder) Enter(nonTerm string) {
 	t := NewTree(nonTerm)
-	p.st.push(ele{
-		index:   p.current,
+	b.st.push(ele{
+		index:   b.current,
 		nonTerm: t,
 	})
 	ft := NewFlowTree(nonTerm)
-	p.flowTreeStack = append(p.flowTreeStack, ft)
+	b.flowTreeStack = append(b.flowTreeStack, ft)
 }
 
-func (p *Parser) Exit(result *bool) {
+func (b *Builder) Exit(result *bool) {
 	if result == nil {
 		panic("result cannot be nil")
 	}
 	var e ele
 	var ok bool
 	// don't pop root
-	if len(p.st) > 1 {
-		e, ok = p.st.pop()
+	if len(b.st) > 1 {
+		e, ok = b.st.pop()
 		if !ok {
 			panic("nothing to pop")
 		}
 	}
 
-	ft := p.flowTreeStack[len(p.flowTreeStack)-1]
+	ft := b.flowTreeStack[len(b.flowTreeStack)-1]
 	ft.data += fmt.Sprintf("(%t)", *result)
-	if len(p.flowTreeStack) > 1 {
-		p.flowTreeStack = p.flowTreeStack[:len(p.flowTreeStack)-1]
-		last := p.flowTreeStack[len(p.flowTreeStack)-1]
+	if len(b.flowTreeStack) > 1 {
+		b.flowTreeStack = b.flowTreeStack[:len(b.flowTreeStack)-1]
+		last := b.flowTreeStack[len(b.flowTreeStack)-1]
 		last.children = append(last.children, ft)
 	}
 
 	if !*result {
-		p.current = e.index
-	} else if parent, ok := p.st.peek(); ok && e.nonTerm != nil {
+		b.current = e.index
+	} else if parent, ok := b.st.peek(); ok && e.nonTerm != nil {
 		parent.nonTerm.Add(e.nonTerm)
 	}
 }
 
 // Tree retrieves the parse tree for the last production.
-func (p Parser) Tree() *Tree {
-	if e, ok := p.st.peek(); ok {
+func (b Builder) Tree() *Tree {
+	if e, ok := b.st.peek(); ok {
 		return e.nonTerm
 	}
 	return nil
 }
 
-func (p *Parser) PrintTree() {
-	tree.PrintHrn(p.Tree())
+func (b *Builder) PrintTree() {
+	tree.PrintHrn(b.Tree())
 }
