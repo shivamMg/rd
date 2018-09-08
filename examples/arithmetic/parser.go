@@ -1,12 +1,11 @@
 /*
-Grammar without left recursion. Needs arbitrary lookahead.
-	Expr    = Term AddExpr | Term SubExpr
-	AddExpr = "+" Expr | ε
-	SubExpr = "-" Expr | ε
-	Term    = Factor MulExpr | Factor DivExpr
-	MulExpr = "*" Term | ε
-	DivExpr = "/" Term | ε
-	Factor  = "(" Expr ")" | "-" Factor | Number
+Grammar without recursion and left-factored. Needs single lookahead. Suitable for R.D. parsing.
+
+	Expr   = Term Expr'
+	Expr'  = "+" Expr | "-" Expr | ε
+	Term   = Factor Term'
+	Term'  = "*" Term | "/" Term | ε
+	Factor = "(" Expr ")" | "-" Factor | Number
 */
 package main
 
@@ -21,33 +20,19 @@ func Expr() (ok bool) {
 	p.Enter("Expr")
 	defer p.Exit(&ok)
 
-	if Term() && AddExpr() {
-		return true
-	}
-	p.Reset()
-	return Term() && SubExpr()
+	return Term() && ExprPrime()
 }
 
-func AddExpr() (ok bool) {
-	p.Enter("AddExpr")
+func ExprPrime() (ok bool) {
+	p.Enter("Expr'")
 	defer p.Exit(&ok)
 
-	if p.Match(Plus) && Expr() {
-		return true
+	if p.Match(Plus) {
+		return Expr()
 	}
-	p.Reset()
-	p.Add(Epsilon)
-	return true
-}
-
-func SubExpr() (ok bool) {
-	p.Enter("SubExpr")
-	defer p.Exit(&ok)
-
-	if p.Match(Minus) && Expr() {
-		return true
+	if p.Match(Minus) {
+		return Expr()
 	}
-	p.Reset()
 	p.Add(Epsilon)
 	return true
 }
@@ -56,33 +41,19 @@ func Term() (ok bool) {
 	p.Enter("Term")
 	defer p.Exit(&ok)
 
-	if Factor() && MulExpr() {
-		return true
-	}
-	p.Reset()
-	return Factor() && DivExpr()
+	return Factor() && TermPrime()
 }
 
-func MulExpr() (ok bool) {
-	p.Enter("MulExpr")
+func TermPrime() (ok bool) {
+	p.Enter("Term'")
 	defer p.Exit(&ok)
 
-	if p.Match(Star) && Term() {
-		return true
+	if p.Match(Star) {
+		return Term()
 	}
-	p.Reset()
-	p.Add(Epsilon)
-	return true
-}
-
-func DivExpr() (ok bool) {
-	p.Enter("MulExpr")
-	defer p.Exit(&ok)
-
-	if p.Match(Slash) && Term() {
-		return true
+	if p.Match(Slash) {
+		return Term()
 	}
-	p.Reset()
 	p.Add(Epsilon)
 	return true
 }
@@ -91,14 +62,12 @@ func Factor() (ok bool) {
 	p.Enter("Factor")
 	defer p.Exit(&ok)
 
-	if p.Match(OpenParen) && Expr() && p.Match(CloseParen) {
-		return true
+	if p.Match(OpenParen) {
+		return Expr() && p.Match(CloseParen)
 	}
-	p.Reset()
-	if p.Match(Minus) && Factor() {
-		return true
+	if p.Match(Minus) {
+		return Factor()
 	}
-	p.Reset()
 	return Number()
 }
 

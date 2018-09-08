@@ -18,6 +18,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// p.PrintTree()
-	p.PrintFlowTree()
+	p.PrintTree()
+	// p.PrintFlowTree()
 }

@@ -187,7 +187,7 @@ func (p *Parser) Exit(result *bool) {
 
 	if !*result {
 		p.current = e.index
-	} else if parent, ok := p.st.peek(); ok && len(p.st) > 0 {
+	} else if parent, ok := p.st.peek(); ok && e.nonTerm != nil {
 		parent.nonTerm.Add(e.nonTerm)
 	}
 }
