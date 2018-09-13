@@ -2,6 +2,8 @@ package rd
 
 import "github.com/shivamMg/ppds/tree"
 
+type Token interface{}
+
 type Tree struct {
 	Symbol   string
 	Subtrees []*Tree

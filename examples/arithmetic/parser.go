@@ -1,5 +1,5 @@
 /*
-Grammar without recursion and left-factored. Needs single lookahead. Suitable for R.D. parsing.
+Grammar without recursion. Left-factored. Needs single lookahead. Suitable for R.D. parsing.
 
 	Expr   = Term Expr'
 	Expr'  = "+" Expr | "-" Expr | ε
