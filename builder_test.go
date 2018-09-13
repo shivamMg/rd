@@ -1,204 +1,212 @@
 package rd_test
 
 import (
-	"encoding/json"
-	"reflect"
+	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/shivamMg/rd"
 )
 
-func TestArithGrammar(test *testing.T) {
-	/*
-	   	"(", "id", "*", "id", ")", "+", "id"
-	   Recursive Descent parser for the following grammar:
-	   	E  -> TE'
-	   	E' -> +TE'|ε
-	   	T  -> FT'
-	   	T' -> *FT'|ε
-	   	F  -> id|(E)
+const (
+	Plus       = "+"
+	Minus      = "-"
+	Star       = "*"
+	Slash      = "/"
+	OpenParen  = "("
+	CloseParen = ")"
+	Epsilon    = "ε"
+)
 
-	   - Used in parsing addition and multiplication arithmetic expressions.
-	   - ε represents empty string.
-	*/
-	wantJSON := `{
-		"Symbol": "E",
-		"Subtrees": [
-			{
-				"Symbol": "T",
-				"Subtrees": [
-					{
-						"Symbol": "F",
-						"Subtrees": [
-							{
-								"Symbol": "(",
-								"Subtrees": null
-							},
-							{
-								"Symbol": "E",
-								"Subtrees": [
-									{
-										"Symbol": "T",
-										"Subtrees": [
-											{
-												"Symbol": "F",
-												"Subtrees": [
-													{
-														"Symbol": "id",
-														"Subtrees": null
-													}
-												]
-											},
-											{
-												"Symbol": "T'",
-												"Subtrees": [
-													{
-														"Symbol": "*",
-														"Subtrees": null
-													},
-													{
-														"Symbol": "F",
-														"Subtrees": [
-															{
-																"Symbol": "id",
-																"Subtrees": null
-															}
-														]
-													},
-													{
-														"Symbol": "T'",
-														"Subtrees": null
-													}
-												]
-											}
-										]
-									},
-									{
-										"Symbol": "E'",
-										"Subtrees": null
-									}
-								]
-							},
-							{
-								"Symbol": ")",
-								"Subtrees": null
-							}
-						]
-					},
-					{
-						"Symbol": "T'",
-						"Subtrees": null
-					}
-				]
-			},
-			{
-				"Symbol": "E'",
-				"Subtrees": [
-					{
-						"Symbol": "+",
-						"Subtrees": null
-					},
-					{
-						"Symbol": "T",
-						"Subtrees": [
-							{
-								"Symbol": "F",
-								"Subtrees": [
-									{
-										"Symbol": "id",
-										"Subtrees": null
-									}
-								]
-							},
-							{
-								"Symbol": "T'",
-								"Subtrees": null
-							}
-						]
-					},
-					{
-						"Symbol": "E'",
-						"Subtrees": null
-					}
-				]
-			}
-		]
-	}`
-	var want, got interface{}
-	json.Unmarshal([]byte(wantJSON), &want)
-	p := rd.NewBuilder([]string{"(", "id", "*", "id", ")", "+", "id"})
+var (
+	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
+	b           *rd.Builder
+)
 
-	p.Rule("E", func() bool {
-		return p.Match("T") && p.Match("E'")
-	})
+func Expr() (ok bool) {
+	b.Enter("Expr")
+	defer b.Exit(&ok)
 
-	p.Rule("E'", func() bool {
-		if p.Match("+") &&
-			p.Match("T") &&
-			p.Match("E'") {
-			return true
-		}
-		// epsilon exists for the rule
-		return true
-	})
-
-	p.Rule("T", func() bool {
-		if p.Match("F") &&
-			p.Match("T'") {
-			return true
-		}
-		return false
-	})
-
-	p.Rule("T'", func() bool {
-		if p.Match("*") &&
-			p.Match("F") &&
-			p.Match("T'") {
-			return true
-		}
-		// epsilon exists for the rule
-		return true
-	})
-
-	p.Rule("F", func() bool {
-		if p.Match("id") {
-			return true
-		}
-		return p.Match("(") && p.Match("E") && p.Match(")")
-	})
-
-	gotOK := p.Match("E")
-	if gotOK != true {
-		test.Fatal("Parsing failed")
-	}
-	gotJSON, _ := json.Marshal(p.Tree())
-	json.Unmarshal(gotJSON, &got)
-	if !reflect.DeepEqual(want, got) {
-		test.Errorf("Expected: %v\nGot: %v\n", want, got)
-	}
+	return Term() && ExprPrime()
 }
 
-func TestInvalidInput(test *testing.T) {
-	p := rd.NewBuilder([]string{"a", "c"})
+func ExprPrime() (ok bool) {
+	b.Enter("Expr'")
+	defer b.Exit(&ok)
 
-	p.Rule("E", func() bool {
-		if p.Match("a") &&
-			p.Match("F") {
-			return true
-		}
-		return p.Match("G")
-	})
+	if b.Match(Plus) {
+		return Expr()
+	}
+	if b.Match(Minus) {
+		return Expr()
+	}
+	b.Add(Epsilon)
+	return true
+}
 
-	p.Rule("F", func() bool {
-		return p.Match("b")
-	})
+func Term() (ok bool) {
+	b.Enter("Term")
+	defer b.Exit(&ok)
 
-	p.Rule("G", func() bool {
-		return p.Match("c")
-	})
+	return Factor() && TermPrime()
+}
 
-	ok := p.Match("E")
-	if ok {
-		test.Error("Match should've failed")
+func TermPrime() (ok bool) {
+	b.Enter("Term'")
+	defer b.Exit(&ok)
+
+	if b.Match(Star) {
+		return Term()
+	}
+	if b.Match(Slash) {
+		return Term()
+	}
+	b.Add(Epsilon)
+	return true
+}
+
+func Factor() (ok bool) {
+	b.Enter("Factor")
+	defer b.Exit(&ok)
+
+	if b.Match(OpenParen) {
+		return Expr() && b.Match(CloseParen)
+	}
+	if b.Match(Minus) {
+		return Factor()
+	}
+	return Number()
+}
+
+func Number() (ok bool) {
+	b.Enter("Number")
+	defer b.Exit(&ok)
+
+	token, ok := b.Next()
+	if !ok {
+		return false
+	}
+	if numberRegex.MatchString(fmt.Sprint(token)) {
+		b.Add(token)
+		return true
+	}
+	b.Reset()
+	return false
+}
+
+func TestArithmeticExpressionsGrammar(t *testing.T) {
+	tokens := []rd.Token{"2.8", "+", "(", "3", "-", ".733", ")", "/", "23"}
+	b = rd.NewBuilder(tokens)
+	ok := Expr()
+	if !ok {
+		t.Error("expected parsing to pass")
+	}
+
+	debugTree := `Expr(true)
+├─ Term(true)
+│  ├─ Factor(true)
+│  │  ├─ 2.8 ≠ (
+│  │  ├─ 2.8 ≠ -
+│  │  └─ Number(true)
+│  └─ Term'(true)
+│     ├─ + ≠ *
+│     └─ + ≠ /
+└─ Expr'(true)
+   ├─ + = +
+   └─ Expr(true)
+      ├─ Term(true)
+      │  ├─ Factor(true)
+      │  │  ├─ ( = (
+      │  │  ├─ Expr(true)
+      │  │  │  ├─ Term(true)
+      │  │  │  │  ├─ Factor(true)
+      │  │  │  │  │  ├─ 3 ≠ (
+      │  │  │  │  │  ├─ 3 ≠ -
+      │  │  │  │  │  └─ Number(true)
+      │  │  │  │  └─ Term'(true)
+      │  │  │  │     ├─ - ≠ *
+      │  │  │  │     └─ - ≠ /
+      │  │  │  └─ Expr'(true)
+      │  │  │     ├─ - ≠ +
+      │  │  │     ├─ - = -
+      │  │  │     └─ Expr(true)
+      │  │  │        ├─ Term(true)
+      │  │  │        │  ├─ Factor(true)
+      │  │  │        │  │  ├─ .733 ≠ (
+      │  │  │        │  │  ├─ .733 ≠ -
+      │  │  │        │  │  └─ Number(true)
+      │  │  │        │  └─ Term'(true)
+      │  │  │        │     ├─ ) ≠ *
+      │  │  │        │     └─ ) ≠ /
+      │  │  │        └─ Expr'(true)
+      │  │  │           ├─ ) ≠ +
+      │  │  │           └─ ) ≠ -
+      │  │  └─ ) = )
+      │  └─ Term'(true)
+      │     ├─ / ≠ *
+      │     ├─ / = /
+      │     └─ Term(true)
+      │        ├─ Factor(true)
+      │        │  ├─ 23 ≠ (
+      │        │  ├─ 23 ≠ -
+      │        │  └─ Number(true)
+      │        └─ Term'(true)
+      │           ├─ <no tokens left> ≠ *
+      │           └─ <no tokens left> ≠ /
+      └─ Expr'(true)
+         ├─ <no tokens left> ≠ +
+         └─ <no tokens left> ≠ -
+`
+	got := b.SprintDebugTree()
+	if got != debugTree {
+		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", debugTree, got)
+	}
+
+	parseTree := `Expr
+├─ Term
+│  ├─ Factor
+│  │  └─ Number
+│  │     └─ 2.8
+│  └─ Term'
+│     └─ ε
+└─ Expr'
+   ├─ +
+   └─ Expr
+      ├─ Term
+      │  ├─ Factor
+      │  │  ├─ (
+      │  │  ├─ Expr
+      │  │  │  ├─ Term
+      │  │  │  │  ├─ Factor
+      │  │  │  │  │  └─ Number
+      │  │  │  │  │     └─ 3
+      │  │  │  │  └─ Term'
+      │  │  │  │     └─ ε
+      │  │  │  └─ Expr'
+      │  │  │     ├─ -
+      │  │  │     └─ Expr
+      │  │  │        ├─ Term
+      │  │  │        │  ├─ Factor
+      │  │  │        │  │  └─ Number
+      │  │  │        │  │     └─ .733
+      │  │  │        │  └─ Term'
+      │  │  │        │     └─ ε
+      │  │  │        └─ Expr'
+      │  │  │           └─ ε
+      │  │  └─ )
+      │  └─ Term'
+      │     ├─ /
+      │     └─ Term
+      │        ├─ Factor
+      │        │  └─ Number
+      │        │     └─ 23
+      │        └─ Term'
+      │           └─ ε
+      └─ Expr'
+         └─ ε
+`
+	got = b.Tree().Sprint()
+	if got != parseTree {
+		t.Errorf("invalid parse tree. expected: %s\ngot: %s\n", parseTree, got)
 	}
 }

@@ -29,6 +29,10 @@ func (b *Builder) PrintDebugTree() {
 	tree.PrintHrn(b.finalDebugTree)
 }
 
+func (b *Builder) SprintDebugTree() string {
+	return tree.SprintHrn(b.finalDebugTree)
+}
+
 func (b *Builder) Next() (token Token, ok bool) {
 	b.mustEnter("Next")
 	if b.current == len(b.tokens)-1 {
