@@ -1,0 +1,8 @@
+github.com/alecthomas/chroma v0.5.0 h1:PI0RlRSWL+8GSMuIMMA5KIND4CeJ5KXUQA60LLp/SjA=
+github.com/alecthomas/chroma v0.5.0/go.mod h1:MmozekIi2rfQSzDcdEZ2BoJ9Pxs/7uc2Y4Boh+hIeZo=
+github.com/dlclark/regexp2 v1.1.6 h1:CqB4MjHw0MFCDj+PHHjiESmHX+N7t0tJzKvC6M97BRg=
+github.com/dlclark/regexp2 v1.1.6/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
+github.com/shivamMg/ppds v0.0.0-20180628070107-c32714a96b1e h1:6TC4+mcfjw9olnx6zfSsq1GA9/MnCuF84vW9MK1PgYs=
+github.com/shivamMg/ppds v0.0.0-20180628070107-c32714a96b1e/go.mod h1:hb39VqUO6qfkb9zBBQPTIV1vWBtI7yQsG0wr3pN78fM=
+github.com/shivamMg/rd v0.0.0-20180913151202-a6705aaa497a h1:rbze6dxbxa02KBAzK2NE+5Zeas+JYK+r8nwVy36/xww=
+github.com/shivamMg/rd v0.0.0-20180913151202-a6705aaa497a/go.mod h1:x+88pXtJLSIwkBTZ6ba2PaKFQ4O70j/kSdv/BDPZmlg=
