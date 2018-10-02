@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/alecthomas/chroma"
 	"github.com/shivamMg/rd"
@@ -32,7 +32,7 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 		case chroma.Operator, chroma.Punctuation, chroma.NumberInteger, chroma.NumberFloat:
 			tokens = append(tokens, token.Value)
 		case chroma.Error:
-			return nil, errors.New("invalid token")
+			return nil, fmt.Errorf("invalid token: %v", token)
 		}
 	}
 	return tokens, nil

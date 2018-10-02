@@ -7,13 +7,29 @@ import (
 	"github.com/shivamMg/ppds/tree"
 )
 
+type ParsingError struct {
+	debugTree *debugTree
+}
+
+func (e *ParsingError) Error() string {
+	return "parsing error"
+}
+
+func (e *ParsingError) PrintDebugTree() {
+	tree.PrintHrn(e.debugTree)
+}
+
+func (e *ParsingError) SprintDebugTree() string {
+	return tree.SprintHrn(e.debugTree)
+}
+
 type Builder struct {
-	tokens         []Token
-	current        int
-	stack          stack
-	finalEle       ele
-	debugStack     debugStack
-	finalDebugTree *debugTree
+	tokens     []Token
+	current    int
+	stack      stack
+	finalEle   ele
+	debugStack debugStack
+	finalErr   *ParsingError
 }
 
 func NewBuilder(tokens []Token) *Builder {
@@ -23,14 +39,6 @@ func NewBuilder(tokens []Token) *Builder {
 		stack:      stack{},
 		debugStack: debugStack{},
 	}
-}
-
-func (b *Builder) PrintDebugTree() {
-	tree.PrintHrn(b.finalDebugTree)
-}
-
-func (b *Builder) SprintDebugTree() string {
-	return tree.SprintHrn(b.finalDebugTree)
 }
 
 func (b *Builder) Next() (token Token, ok bool) {
@@ -105,7 +113,7 @@ func (b *Builder) Exit(result *bool) {
 	dt := b.debugStack.pop()
 	dt.data += fmt.Sprintf("(%t)", *result)
 	if b.debugStack.isEmpty() {
-		b.finalDebugTree = dt
+		b.finalErr = &ParsingError{dt}
 	} else {
 		parent := b.debugStack.peek()
 		parent.add(dt)
@@ -114,6 +122,10 @@ func (b *Builder) Exit(result *bool) {
 
 func (b Builder) Tree() *Tree {
 	return b.finalEle.nonTerm
+}
+
+func (b Builder) Err() *ParsingError {
+	return b.finalErr
 }
 
 func (b Builder) mustEnter(operation string) {

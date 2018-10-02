@@ -10,12 +10,19 @@ Grammar without recursion. Left-factored. Needs single lookahead. Suitable for R
 package main
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 
 	"github.com/shivamMg/rd"
 )
+
+const Grammar = `
+Expr   = Term Expr'
+Expr'  = "+" Expr | "-" Expr | ε
+Term   = Factor Term'
+Term'  = "*" Term | "/" Term | ε
+Factor = "(" Expr ")" | "-" Factor | Number
+`
 
 var (
 	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
@@ -96,7 +103,7 @@ func Number() (ok bool) {
 func Parse(tokens []rd.Token) (parseTree *rd.Tree, err error) {
 	b = rd.NewBuilder(tokens)
 	if ok := Expr(); !ok {
-		return nil, errors.New("parsing failed")
+		return nil, b.Err()
 	}
 	return b.Tree(), nil
 }
