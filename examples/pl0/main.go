@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/shivamMg/rd"
-	"github.com/shivamMg/rd/examples/PL0/lexer"
-	"github.com/shivamMg/rd/examples/PL0/parser"
+	"github.com/shivamMg/rd/examples/pl0/lexer"
+	"github.com/shivamMg/rd/examples/pl0/parser"
 	"io/ioutil"
 )
 

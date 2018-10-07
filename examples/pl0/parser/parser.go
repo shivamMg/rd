@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/shivamMg/rd"
-	. "github.com/shivamMg/rd/examples/PL0/tokens"
+	. "github.com/shivamMg/rd/examples/pl0/tokens"
 )
 
 func Parse(tokens []rd.Token) (*rd.Tree, error) {

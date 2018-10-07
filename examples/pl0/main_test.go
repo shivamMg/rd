@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/shivamMg/rd/examples/PL0/lexer"
-	"github.com/shivamMg/rd/examples/PL0/parser"
+	"github.com/shivamMg/rd/examples/pl0/lexer"
+	"github.com/shivamMg/rd/examples/pl0/parser"
 )
 
 const (
