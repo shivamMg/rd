@@ -1,81 +1,77 @@
-/*
-Recursive Descent parser for PL/0 programming language.
-The grammar has been copied from https://en.wikipedia.org/wiki/PL/0#Grammar
-
-
-program = block "." .
-
-block =
-    ["const" ident "=" number {"," ident "=" number} ";"]
-    ["var" ident {"," ident} ";"]
-    {"procedure" ident ";" block ";"} statement .
-
-statement =
-	ident ":=" expression
-	| "!" expression
-	| "?" ident
-    | "call" ident
-    | "begin" statement {";" statement } "end"
-    | "if" condition "then" statement
-    | "while" condition "do" statement .
-
-condition =
-    "odd" expression
-    | expression ("="|"#"|"<"|"<="|">"|">=") expression .
-
-expression = ["+"|"-"] term {("+"|"-") term} .
-
-term = factor {("*"|"/") factor} .
-
-factor =
-    ident
-    | number
-    | "(" expression ")" .
-*/
 package main
 
 import (
 	"fmt"
-	"github.com/shivamMg/ppds/tree"
+	"os"
+
 	"github.com/shivamMg/rd"
 	"github.com/shivamMg/rd/examples/PL0/lexer"
 	"github.com/shivamMg/rd/examples/PL0/parser"
+	"io/ioutil"
 )
 
-type node struct {
-	data string
-	c    []*node
-}
+// Grammar is PL/0's grammar in EBNF. Copied from https://en.wikipedia.org/wiki/PL/0#Grammar
+const Grammar = `
+	program = block "." .
 
-func (n *node) Data() interface{} {
-	return n.data
-}
+	block =
+		["const" ident "=" number {"," ident "=" number} ";"]
+		["var" ident {"," ident} ";"]
+		{"procedure" ident ";" block ";"} statement .
 
-func (n *node) Children() (c []tree.Node) {
-	for _, child := range n.c {
-		c = append(c, tree.Node(child))
-	}
-	return
-}
+	statement =
+		ident ":=" expression
+		| "!" expression
+		| "?" ident
+		| "call" ident
+		| "begin" statement {";" statement } "end"
+		| "if" condition "then" statement
+		| "while" condition "do" statement .
 
-func convert(t *rd.Tree) *node {
-	n := new(node)
-	n.data = t.Symbol
-	for _, c := range t.Subtrees {
-		n.c = append(n.c, convert(c))
-	}
-	return n
-}
+	condition =
+		"odd" expression
+		| expression ("="|"#"|"<"|"<="|">"|">=") expression .
+
+	expression = ["+"|"-"] term {("+"|"-") term} .
+
+	term = factor {("*"|"/") factor} .
+
+	factor =
+		ident
+		| number
+		| "(" expression ")" .
+`
 
 func main() {
-	tokens := lexer.Lex(squareProgram)
-	fmt.Println(tokens)
-	ok, parseTree := parser.Parse(tokens, parser.Program)
-	fmt.Println("Match:", ok)
-	fmt.Println(sprint(parseTree))
-}
+	if len(os.Args) != 2 {
+		fmt.Println("invalid arguments. pass PL/0 program file as an argument")
+		os.Exit(1)
+	}
+	code, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		fmt.Printf("could not open file %q. err: %v", os.Args[1], err)
+		os.Exit(1)
+	}
 
-func sprint(t *rd.Tree) string {
-	root := convert(t)
-	return tree.SprintHrn(root)
+	tokens, err := lexer.Lex(string(code))
+	if err != nil {
+		fmt.Println("lexing failed.", err)
+		os.Exit(1)
+	}
+	fmt.Println("Tokens:", tokens)
+
+	fmt.Println("\nGrammar:", Grammar)
+
+	parseTree, err := parser.Parse(tokens)
+	if err != nil {
+		fmt.Println("parsing failed.", err)
+		if e, ok := err.(*rd.ParsingError); ok {
+			fmt.Println("debug tree:")
+			e.PrintDebugTree()
+		}
+		os.Exit(1)
+	}
+
+	fmt.Println("Parse Tree:")
+	parseTree.Print()
 }

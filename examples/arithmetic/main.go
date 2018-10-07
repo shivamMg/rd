@@ -8,6 +8,15 @@ import (
 	"github.com/shivamMg/rd"
 )
 
+// Grammar without recursion. Left-factored. Needs single lookahead. Suitable for R.D. parsing.
+const Grammar = `
+	Expr   = Term Expr'
+	Expr'  = "+" Expr | "-" Expr | ε
+	Term   = Factor Term'
+	Term'  = "*" Term | "/" Term | ε
+	Factor = "(" Expr ")" | "-" Factor | Number
+`
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("invalid arguments. pass arithmetic expression as argument")

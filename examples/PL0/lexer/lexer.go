@@ -1,8 +1,13 @@
 package lexer
 
 import (
-	"github.com/alecthomas/chroma"
+	"fmt"
+
 	"strings"
+
+	"github.com/alecthomas/chroma"
+	"github.com/shivamMg/rd"
+	pl0Tokens "github.com/shivamMg/rd/examples/PL0/tokens"
 )
 
 var lexer = chroma.MustNewLexer(
@@ -28,17 +33,28 @@ var lexer = chroma.MustNewLexer(
 	},
 )
 
-func Lex(code string) (tokens []string) {
+func Lex(code string) ([]rd.Token, error) {
+	var tokens []rd.Token
 	iter, err := lexer.Tokenise(nil, code)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	token := iter()
 	for token != nil {
-		if token.Type != chroma.Text {
-			tokens = append(tokens, strings.ToLower(token.Value))
+		switch token.Type {
+		case chroma.Text:
+		case chroma.Number, chroma.NameVariable:
+			tokens = append(tokens, token.Value)
+		case chroma.Error:
+			return nil, fmt.Errorf("invalid token: %v", token)
+		default:
+			pl0Token, ok := pl0Tokens.TokenFromString(strings.ToLower(token.Value))
+			if !ok {
+				return nil, fmt.Errorf("invalid token: %v", token)
+			}
+			tokens = append(tokens, pl0Token)
 		}
 		token = iter()
 	}
-	return tokens
+	return tokens, nil
 }

@@ -1,12 +1,3 @@
-/*
-Grammar without recursion. Left-factored. Needs single lookahead. Suitable for R.D. parsing.
-
-	Expr   = Term Expr'
-	Expr'  = "+" Expr | "-" Expr | ε
-	Term   = Factor Term'
-	Term'  = "*" Term | "/" Term | ε
-	Factor = "(" Expr ")" | "-" Factor | Number
-*/
 package main
 
 import (
@@ -15,14 +6,6 @@ import (
 
 	"github.com/shivamMg/rd"
 )
-
-const Grammar = `
-Expr   = Term Expr'
-Expr'  = "+" Expr | "-" Expr | ε
-Term   = Factor Term'
-Term'  = "*" Term | "/" Term | ε
-Factor = "(" Expr ")" | "-" Factor | Number
-`
 
 var (
 	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)

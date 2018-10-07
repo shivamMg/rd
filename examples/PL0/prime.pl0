@@ -1,24 +1,4 @@
-// Examples copied from https://en.wikipedia.org/wiki/PL/0#Examples
-package main
-
-const (
-	squareProgram = `VAR x, squ;
-
-PROCEDURE square;
-BEGIN
-   squ:= x * x
-END;
-
-BEGIN
-   x := 1;
-   WHILE x <= 10 DO
-   BEGIN
-      CALL square;
-      ! squ;
-      x := x + 1
-   END
-END.`
-	primeProgram = `const max = 100;
+const max = 100;
 var arg, ret;
 
 procedure isprime;
@@ -49,5 +29,4 @@ begin
 end;
 
 call primes
-.`
-)
+.
