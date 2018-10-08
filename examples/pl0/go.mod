@@ -1,4 +1,4 @@
-module github.com/shivamMg/rd/examples/arithmetic
+module github.com/shivamMg/rd/examples/pl0
 
 require (
 	github.com/alecthomas/chroma v0.5.0
