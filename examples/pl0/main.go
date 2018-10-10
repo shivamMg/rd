@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shivamMg/rd"
+	"io/ioutil"
+
 	"github.com/shivamMg/rd/examples/pl0/lexer"
 	"github.com/shivamMg/rd/examples/pl0/parser"
-	"io/ioutil"
 )
 
 // Grammar is PL/0's grammar in EBNF. Copied from https://en.wikipedia.org/wiki/PL/0#Grammar
@@ -62,13 +62,10 @@ func main() {
 
 	fmt.Println("\nGrammar:", Grammar)
 
-	parseTree, err := parser.Parse(tokens)
+	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
 		fmt.Println("parsing failed.", err)
-		if e, ok := err.(*rd.ParsingError); ok {
-			fmt.Println("debug tree:")
-			e.PrintDebugTree()
-		}
+		fmt.Println("debug tree:\n", debugTree)
 		os.Exit(1)
 	}
 

@@ -55,6 +55,14 @@ func (dt *debugTree) Children() (c []tree.Node) {
 	return
 }
 
+func (dt *debugTree) Print() {
+	tree.PrintHrn(dt)
+}
+
+func (dt *debugTree) Sprint() string {
+	return tree.SprintHrn(dt)
+}
+
 type debugStack []*debugTree
 
 func (ds debugStack) isEmpty() bool {

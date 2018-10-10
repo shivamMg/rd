@@ -83,10 +83,10 @@ func Number() (ok bool) {
 	return false
 }
 
-func Parse(tokens []rd.Token) (parseTree *rd.Tree, err error) {
+func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) {
 	b = rd.NewBuilder(tokens)
 	if ok := Expr(); !ok {
-		return nil, b.Err()
+		return nil, b.DebugTree().Sprint(), b.Err()
 	}
-	return b.Tree(), nil
+	return b.Tree(), b.DebugTree().Sprint(), nil
 }

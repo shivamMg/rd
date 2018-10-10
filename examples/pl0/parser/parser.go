@@ -8,12 +8,12 @@ import (
 	. "github.com/shivamMg/rd/examples/pl0/tokens"
 )
 
-func Parse(tokens []rd.Token) (*rd.Tree, error) {
+func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) {
 	b := rd.NewBuilder(tokens)
 	if ok := Program(b); !ok {
-		return nil, b.Err()
+		return nil, b.DebugTree().Sprint(), b.Err()
 	}
-	return b.Tree(), nil
+	return b.Tree(), b.DebugTree().Sprint(), nil
 }
 
 func Program(b *rd.Builder) (ok bool) {

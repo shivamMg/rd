@@ -275,7 +275,8 @@ func TestPrimeProgram(t *testing.T) {
 	if err != nil {
 		t.Error("lexing failed.", err)
 	}
-	parseTree, err := parser.Parse(tokens)
+	// TODO: Validate debugTree as well
+	parseTree, _, err := parser.Parse(tokens)
 	if err != nil {
 		t.Error("parsing failed.", err)
 	}
@@ -380,7 +381,8 @@ func TestSquareProgram(t *testing.T) {
 	if err != nil {
 		t.Error("lexing failed.", err)
 	}
-	parseTree, err := parser.Parse(tokens)
+	// TODO: Validate debugTree as well
+	parseTree, _, err := parser.Parse(tokens)
 	if err != nil {
 		t.Error("parsing failed.", err)
 	}

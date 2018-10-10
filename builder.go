@@ -3,33 +3,23 @@ package rd
 import (
 	"fmt"
 	"log"
-
-	"github.com/shivamMg/ppds/tree"
 )
 
-type ParsingError struct {
-	debugTree *debugTree
-}
+type ParsingError struct{}
 
 func (e *ParsingError) Error() string {
+	// TODO: Must return useful detail. ex. no tokens left
 	return "parsing error"
 }
 
-func (e *ParsingError) PrintDebugTree() {
-	tree.PrintHrn(e.debugTree)
-}
-
-func (e *ParsingError) SprintDebugTree() string {
-	return tree.SprintHrn(e.debugTree)
-}
-
 type Builder struct {
-	tokens     []Token
-	current    int
-	stack      stack
-	finalEle   ele
-	debugStack debugStack
-	finalErr   *ParsingError
+	tokens         []Token
+	current        int
+	stack          stack
+	finalEle       ele
+	debugStack     debugStack
+	finalDebugTree *debugTree
+	finalErr       *ParsingError
 }
 
 func NewBuilder(tokens []Token) *Builder {
@@ -113,18 +103,23 @@ func (b *Builder) Exit(result *bool) {
 	dt := b.debugStack.pop()
 	dt.data += fmt.Sprintf("(%t)", *result)
 	if b.debugStack.isEmpty() {
-		b.finalErr = &ParsingError{dt}
+		b.finalDebugTree = dt
+		b.finalErr = &ParsingError{}
 	} else {
 		parent := b.debugStack.peek()
 		parent.add(dt)
 	}
 }
 
-func (b Builder) Tree() *Tree {
+func (b *Builder) Tree() *Tree {
 	return b.finalEle.nonTerm
 }
 
-func (b Builder) Err() *ParsingError {
+func (b *Builder) DebugTree() *debugTree {
+	return b.finalDebugTree
+}
+
+func (b *Builder) Err() *ParsingError {
 	return b.finalErr
 }
 

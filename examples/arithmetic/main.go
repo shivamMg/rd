@@ -34,13 +34,10 @@ func main() {
 	fmt.Println("Grammar in EBNF:")
 	fmt.Println(Grammar)
 
-	parseTree, err := Parse(tokens)
+	parseTree, debugTree, err := Parse(tokens)
 	if err != nil {
 		fmt.Println("Parsing failed.", err)
-		if e, ok := err.(*rd.ParsingError); ok {
-			fmt.Print("Debug Tree:\n\n")
-			e.PrintDebugTree()
-		}
+		fmt.Println("Debug Tree:\n", debugTree)
 		os.Exit(1)
 	}
 	fmt.Print("Parse Tree:\n\n")

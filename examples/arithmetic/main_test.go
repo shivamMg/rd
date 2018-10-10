@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+
 	"github.com/shivamMg/rd"
 )
 
@@ -13,7 +14,6 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
 		t.Error("parsing failed")
 	}
 
-	/*
 	debugTree := `Expr(true)
 ├─ Term(true)
 │  ├─ Factor(true)
@@ -69,11 +69,10 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
          ├─ <no tokens left> ≠ +
          └─ <no tokens left> ≠ -
 `
-	got := b.SprintDebugTree()
+	got := b.DebugTree().Sprint()
 	if got != debugTree {
 		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", debugTree, got)
 	}
-	*/
 
 	parseTree := `Expr
 ├─ Term
@@ -118,12 +117,8 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
       └─ Expr'
          └─ ε
 `
-	got := b.Tree().Sprint()
+	got = b.Tree().Sprint()
 	if got != parseTree {
 		t.Errorf("invalid parse tree. want: %s\ngot: %s\n", parseTree, got)
 	}
 }
-
-
-
-
