@@ -104,7 +104,9 @@ func (b *Builder) Exit(result *bool) {
 	dt.data += fmt.Sprintf("(%t)", *result)
 	if b.debugStack.isEmpty() {
 		b.finalDebugTree = dt
-		b.finalErr = &ParsingError{}
+		if !*result {
+			b.finalErr = &ParsingError{}
+		}
 	} else {
 		parent := b.debugStack.peek()
 		parent.add(dt)
