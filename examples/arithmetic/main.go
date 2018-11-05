@@ -6,16 +6,8 @@ import (
 	"strings"
 
 	"github.com/shivamMg/rd"
+	"github.com/shivamMg/rd/examples/arithmetic/parser"
 )
-
-// Grammar without recursion. Left-factored. Needs single lookahead. Suitable for R.D. parsing.
-const Grammar = `
-	Expr   = Term Expr'
-	Expr'  = "+" Expr | "-" Expr | ε
-	Term   = Factor Term'
-	Term'  = "*" Term | "/" Term | ε
-	Factor = "(" Expr ")" | "-" Factor | Number
-`
 
 func main() {
 	if len(os.Args) < 2 {
@@ -32,12 +24,12 @@ func main() {
 	printTokens(tokens)
 
 	fmt.Println("Grammar in EBNF:")
-	fmt.Println(Grammar)
+	fmt.Println(parser.Grammar)
 
-	parseTree, debugTree, err := Parse(tokens)
+	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
 		fmt.Println("Parsing failed.", err)
-		fmt.Println("Debug Tree:\n", debugTree)
+		fmt.Print("Debug Tree:\n", debugTree, "\n")
 		os.Exit(1)
 	}
 	fmt.Print("Parse Tree:\n\n")

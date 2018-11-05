@@ -8,6 +8,38 @@ import (
 	. "github.com/shivamMg/rd/examples/pl0/tokens"
 )
 
+// Grammar is PL/0's grammar in EBNF. Copied from https://en.wikipedia.org/wiki/PL/0#Grammar
+const Grammar = `
+	program = block "." .
+
+	block =
+		["const" ident "=" number {"," ident "=" number} ";"]
+		["var" ident {"," ident} ";"]
+		{"procedure" ident ";" block ";"} statement .
+
+	statement =
+		ident ":=" expression
+		| "!" expression
+		| "?" ident
+		| "call" ident
+		| "begin" statement {";" statement } "end"
+		| "if" condition "then" statement
+		| "while" condition "do" statement .
+
+	condition =
+		"odd" expression
+		| expression ("="|"#"|"<"|"<="|">"|">=") expression .
+
+	expression = ["+"|"-"] term {("+"|"-") term} .
+
+	term = factor {("*"|"/") factor} .
+
+	factor =
+		ident
+		| number
+		| "(" expression ")" .
+`
+
 func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) {
 	b := rd.NewBuilder(tokens)
 	if ok := Program(b); !ok {

@@ -4,17 +4,17 @@ import (
 	"testing"
 
 	"github.com/shivamMg/rd"
+	"github.com/shivamMg/rd/examples/arithmetic/parser"
 )
 
 func TestArithmeticExpressionsGrammar(t *testing.T) {
 	tokens := []rd.Token{"2.8", "+", "(", "3", "-", ".733", ")", "/", "23"}
-	b = rd.NewBuilder(tokens)
-	ok := Expr()
-	if !ok {
+	parseTree, debugTree, err := parser.Parse(tokens)
+	if err != nil {
 		t.Error("parsing failed")
 	}
 
-	debugTree := `Expr(true)
+	expectedDebugTree := `Expr(true)
 ├─ Term(true)
 │  ├─ Factor(true)
 │  │  ├─ 2.8 ≠ (
@@ -69,12 +69,11 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
          ├─ <no tokens left> ≠ +
          └─ <no tokens left> ≠ -
 `
-	got := b.DebugTree().Sprint()
-	if got != debugTree {
-		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", debugTree, got)
+	if debugTree != expectedDebugTree {
+		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", expectedDebugTree, debugTree)
 	}
 
-	parseTree := `Expr
+	expectedParseTree := `Expr
 ├─ Term
 │  ├─ Factor
 │  │  └─ Number
@@ -117,8 +116,8 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
       └─ Expr'
          └─ ε
 `
-	got = b.Tree().Sprint()
-	if got != parseTree {
-		t.Errorf("invalid parse tree. want: %s\ngot: %s\n", parseTree, got)
+	got := parseTree.Sprint()
+	if got != expectedParseTree {
+		t.Errorf("invalid parse tree. want: %s\ngot: %s\n", expectedParseTree, got)
 	}
 }

@@ -1,11 +1,20 @@
-package main
+package parser
 
 import (
 	"fmt"
 	"regexp"
 
 	"github.com/shivamMg/rd"
+	. "github.com/shivamMg/rd/examples/arithmetic/tokens"
 )
+
+const Grammar = `
+	Expr   = Term Expr'
+	Expr'  = "+" Expr | "-" Expr | ε
+	Term   = Factor Term'
+	Term'  = "*" Term | "/" Term | ε
+	Factor = "(" Expr ")" | "-" Factor | Number
+`
 
 var (
 	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
@@ -79,7 +88,6 @@ func Number() (ok bool) {
 		b.Add(token)
 		return true
 	}
-	b.Reset()
 	return false
 }
 
