@@ -28,12 +28,10 @@ func Lex(expr string) (tokens []rd.Token, err error) {
 		return nil, err
 	}
 	for _, token := range iter.Tokens() {
-		switch token.Type {
-		case chroma.Operator, chroma.Punctuation, chroma.NumberInteger, chroma.NumberFloat:
-			tokens = append(tokens, token.Value)
-		case chroma.Error:
+		if token.Type == chroma.Error {
 			return nil, fmt.Errorf("invalid token: %v", token)
 		}
+		tokens = append(tokens, token.Value)
 	}
 	return tokens, nil
 }

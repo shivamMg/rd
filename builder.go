@@ -5,28 +5,33 @@ import (
 	"log"
 )
 
-type ParsingError struct{}
+type ParsingError struct {
+	errString string
+}
 
 func (e *ParsingError) Error() string {
-	// TODO: Must return useful detail. ex. no tokens left
-	return "parsing error"
+	return e.errString
+}
+
+func newParsingError(errString string) *ParsingError {
+	return &ParsingError{errString: errString}
 }
 
 // Builder helps in building a recursive descent parser.
 // It stores a slice of tokens and an index to the current token.
-// It maintains a stack used in building the parse tree (check Tree()).
+// It maintains a stack used in building the parse tree (check ParseTree()).
 // It also builds a debug tree that helps in understanding the parsing
 // flow (check DebugTree()).
 // Enter/Exit methods are used in logging enter and exit of non-terminal
 // functions.
-// Add/Next/Match/Reset are used while working with terminals.
+// Add/Next/Match/Backtrack are used while working with terminals.
 type Builder struct {
 	tokens         []Token
 	current        int
 	stack          stack
 	finalEle       ele
 	debugStack     debugStack
-	finalDebugTree *debugTree
+	finalDebugTree *DebugTree
 	finalErr       *ParsingError
 }
 
@@ -44,6 +49,10 @@ func NewBuilder(tokens []Token) *Builder {
 // no tokens are left, else true.
 func (b *Builder) Next() (token Token, ok bool) {
 	b.mustEnter("Next")
+	return b.next()
+}
+
+func (b *Builder) next() (token Token, ok bool) {
 	if b.current == len(b.tokens)-1 {
 		return nil, false
 	}
@@ -51,10 +60,10 @@ func (b *Builder) Next() (token Token, ok bool) {
 	return b.tokens[b.current], true
 }
 
-// Reset resets the current index for the current non-terminal, and discards
+// Backtrack resets the current index for the current non-terminal, and discards
 // any matches done inside it.
-func (b *Builder) Reset() {
-	b.mustEnter("Reset")
+func (b *Builder) Backtrack() {
+	b.mustEnter("Backtrack")
 	e := b.stack.peek()
 	b.current = e.index
 	e.nonTerm.Subtrees = []*Tree{}
@@ -116,32 +125,36 @@ func (b *Builder) Exit(result *bool) {
 		panic("Exit result cannot be nil")
 	}
 	e := b.stack.pop()
-	if *result {
-		if b.stack.isEmpty() {
-			b.finalEle = e
+	if *result && b.stack.isEmpty() {
+		if _, ok := b.next(); ok {
+			b.finalErr = newParsingError("tokens left after parsing")
 		} else {
-			parent := b.stack.peek()
-			parent.nonTerm.Add(e.nonTerm)
+			b.finalEle = e
 		}
+	} else if *result {
+		parent := b.stack.peek()
+		parent.nonTerm.Add(e.nonTerm)
+	} else if b.stack.isEmpty() {
+		// TODO: improve error message
+		b.finalErr = newParsingError("parsing error")
+		b.current = e.index
 	} else {
 		b.current = e.index
 	}
+
 	dt := b.debugStack.pop()
 	dt.data += fmt.Sprintf("(%t)", *result)
 	if b.debugStack.isEmpty() {
 		b.finalDebugTree = dt
-		if !*result {
-			b.finalErr = &ParsingError{}
-		}
 	} else {
 		parent := b.debugStack.peek()
 		parent.add(dt)
 	}
 }
 
-// Tree returns the parse tree. It's set after the root non-terminal exits with
+// ParseTree returns the parse tree. It's set after the root non-terminal exits with
 // true result.
-func (b *Builder) Tree() *Tree {
+func (b *Builder) ParseTree() *Tree {
 	return b.finalEle.nonTerm
 }
 
@@ -149,7 +162,7 @@ func (b *Builder) Tree() *Tree {
 // non-terminal results (displayed in parentheses) captured throughout parsing.
 // Helps in understanding the parsing flow. It's set after the root non-terminal
 // exits. It has methods Print and Sprint.
-func (b *Builder) DebugTree() *debugTree {
+func (b *Builder) DebugTree() *DebugTree {
 	return b.finalDebugTree
 }
 

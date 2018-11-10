@@ -14,56 +14,54 @@ const Grammar = `
 	Factor = "(" Expr ")" | "-" Factor | Number
 `
 
-var (
-	numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
-	b           *rd.Builder
-)
+var numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
 
-func Expr() (ok bool) {
+func Expr(b *rd.Builder) (ok bool) {
 	b.Enter("Expr")
 	defer b.Exit(&ok)
 
-	if Term() && b.Match(Plus) && Expr() {
+	if Term(b) && b.Match(Plus) && Expr(b) {
 		return true
 	}
-	b.Reset()
-	if Term() && b.Match(Minus) && Expr() {
+	b.Backtrack()
+	if Term(b) && b.Match(Minus) && Expr(b) {
 		return true
 	}
-	b.Reset()
-	return Term()
+	b.Backtrack()
+	return Term(b)
 }
 
-func Term() (ok bool) {
+func Term(b *rd.Builder) (ok bool) {
 	b.Enter("Term")
 	defer b.Exit(&ok)
 
-	if Factor() && b.Match(Star) && Term() {
+	if Factor(b) && b.Match(Star) && Term(b) {
 		return true
 	}
-	b.Reset()
-	if Factor() && b.Match(Slash) && Term() {
+	b.Backtrack()
+	if Factor(b) && b.Match(Slash) && Term(b) {
 		return true
 	}
-	b.Reset()
-	return Factor()
+	b.Backtrack()
+	return Factor(b)
 }
 
-func Factor() (ok bool) {
+func Factor(b *rd.Builder) (ok bool) {
 	b.Enter("Factor")
 	defer b.Exit(&ok)
 
-	if b.Match(OpenParen) && Expr() && b.Match(CloseParen) {
+	if b.Match(OpenParen) && Expr(b) && b.Match(CloseParen) {
 		return true
 	}
-	b.Reset()
-	if b.Match(Minus) && Factor() {
+	b.Backtrack()
+	if b.Match(Minus) && Factor(b) {
 		return true
 	}
-	return Number()
+	b.Backtrack()
+	return Number(b)
 }
 
-func Number() (ok bool) {
+func Number(b *rd.Builder) (ok bool) {
 	b.Enter("Number")
 	defer b.Exit(&ok)
 
@@ -75,14 +73,15 @@ func Number() (ok bool) {
 		b.Add(token)
 		return true
 	}
-	b.Reset()
+	b.Backtrack()
 	return false
 }
 
-func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) {
-	b = rd.NewBuilder(tokens)
-	if ok := Expr(); !ok {
-		return nil, b.DebugTree().Sprint(), b.Err()
+func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree *rd.DebugTree, err error) {
+	b := rd.NewBuilder(tokens)
+	ok := Expr(b)
+	if ok && b.Err() == nil {
+		return b.ParseTree(), b.DebugTree(), nil
 	}
-	return b.Tree(), b.DebugTree().Sprint(), nil
+	return nil, b.DebugTree(), b.Err()
 }

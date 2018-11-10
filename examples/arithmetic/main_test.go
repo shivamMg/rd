@@ -69,8 +69,9 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
          ├─ <no tokens left> ≠ +
          └─ <no tokens left> ≠ -
 `
-	if debugTree != expectedDebugTree {
-		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", expectedDebugTree, debugTree)
+	got := debugTree.Sprint()
+	if got != expectedDebugTree {
+		t.Errorf("invalid debug tree. expected: %s\ngot: %s\n", expectedDebugTree, got)
 	}
 
 	expectedParseTree := `Expr
@@ -116,7 +117,7 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
       └─ Expr'
          └─ ε
 `
-	got := parseTree.Sprint()
+	got = parseTree.Sprint()
 	if got != expectedParseTree {
 		t.Errorf("invalid parse tree. want: %s\ngot: %s\n", expectedParseTree, got)
 	}

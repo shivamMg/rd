@@ -45,7 +45,7 @@ func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) 
 	if ok := Program(b); !ok {
 		return nil, b.DebugTree().Sprint(), b.Err()
 	}
-	return b.Tree(), b.DebugTree().Sprint(), nil
+	return b.ParseTree(), b.DebugTree().Sprint(), nil
 }
 
 func Program(b *rd.Builder) (ok bool) {
@@ -198,14 +198,14 @@ func Ident(b *rd.Builder) (ok bool) {
 		return false
 	}
 	if _, ok := token.(Token); ok {
-		b.Reset()
+		b.Backtrack()
 		return false
 	}
 	if ok, _ := regexp.MatchString(`[[:alpha:]]`, fmt.Sprint(token)); ok {
 		b.Add(token)
 		return true
 	}
-	b.Reset()
+	b.Backtrack()
 	return false
 }
 
@@ -218,13 +218,13 @@ func Number(b *rd.Builder) (ok bool) {
 		return false
 	}
 	if _, ok := token.(Token); ok {
-		b.Reset()
+		b.Backtrack()
 		return false
 	}
 	if ok, _ := regexp.MatchString(`[[:digit:]]`, fmt.Sprint(token)); ok {
 		b.Add(token)
 		return true
 	}
-	b.Reset()
+	b.Backtrack()
 	return false
 }

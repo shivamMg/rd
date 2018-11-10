@@ -1,7 +1,5 @@
 package rd
 
-import "github.com/shivamMg/ppds/tree"
-
 type ele struct {
 	index   int
 	nonTerm *Tree
@@ -28,58 +26,23 @@ func (st *stack) push(e ele) {
 	*st = append(*st, e)
 }
 
-type debugTree struct {
-	data     string
-	subtrees []*debugTree
-}
-
-func newDebugTree(data string) *debugTree {
-	return &debugTree{
-		data:     data,
-		subtrees: []*debugTree{},
-	}
-}
-
-func (dt *debugTree) add(subtree *debugTree) {
-	dt.subtrees = append(dt.subtrees, subtree)
-}
-
-func (dt *debugTree) Data() interface{} {
-	return dt.data
-}
-
-func (dt *debugTree) Children() (c []tree.Node) {
-	for _, child := range dt.subtrees {
-		c = append(c, child)
-	}
-	return
-}
-
-func (dt *debugTree) Print() {
-	tree.PrintHrn(dt)
-}
-
-func (dt *debugTree) Sprint() string {
-	return tree.SprintHrn(dt)
-}
-
-type debugStack []*debugTree
+type debugStack []*DebugTree
 
 func (ds debugStack) isEmpty() bool {
 	return len(ds) == 0
 }
 
-func (ds debugStack) peek() *debugTree {
+func (ds debugStack) peek() *DebugTree {
 	return ds[len(ds)-1]
 }
 
-func (ds *debugStack) pop() *debugTree {
+func (ds *debugStack) pop() *DebugTree {
 	l := len(*ds)
 	dt := (*ds)[l-1]
 	*ds = (*ds)[:l-1]
 	return dt
 }
 
-func (ds *debugStack) push(dt *debugTree) {
+func (ds *debugStack) push(dt *DebugTree) {
 	*ds = append(*ds, dt)
 }

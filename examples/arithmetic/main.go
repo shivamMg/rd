@@ -9,6 +9,7 @@ import (
 	"github.com/shivamMg/rd/examples/arithmetic/parser"
 )
 
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("invalid arguments. pass arithmetic expression as argument")
@@ -18,22 +19,19 @@ func main() {
 	expr := strings.Join(os.Args[1:], " ")
 	tokens, err := Lex(expr)
 	if err != nil {
-		fmt.Println("Lexing failed.", err)
-		os.Exit(1)
+		printExit("Lexing failed.", err)
 	}
 	printTokens(tokens)
 
-	fmt.Println("Grammar in EBNF:")
-	fmt.Println(parser.Grammar)
+	fmt.Print("Grammar:")
+	fmt.Print(parser.Grammar)
 
 	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
-		fmt.Println("Parsing failed.", err)
-		fmt.Print("Debug Tree:\n", debugTree, "\n")
-		os.Exit(1)
+		fmt.Print("Debug Tree:\n\n", debugTree.Sprint())
+		printExit("Parsing failed.", err)
 	}
-	fmt.Print("Parse Tree:\n\n")
-	parseTree.Print()
+	fmt.Print("Parse Tree:\n\n", parseTree.Sprint())
 }
 
 func printTokens(tokens []rd.Token) {
@@ -43,4 +41,9 @@ func printTokens(tokens []rd.Token) {
 		b.WriteString(fmt.Sprint(token, " "))
 	}
 	fmt.Println(b.String())
+}
+
+func printExit(a ...interface{}) {
+	fmt.Fprintln(os.Stderr, a...)
+	os.Exit(1)
 }
