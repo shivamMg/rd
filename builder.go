@@ -33,6 +33,7 @@ type Builder struct {
 	debugStack     debugStack
 	finalDebugTree *DebugTree
 	finalErr       *ParsingError
+	skip           bool
 }
 
 // NewBuilder returns a new Builder for tokens.
@@ -73,7 +74,7 @@ func (b *Builder) Backtrack() {
 func (b *Builder) Add(token Token) {
 	b.mustEnter("Add")
 	e := b.stack.peek()
-	e.nonTerm.Add(NewTree(fmt.Sprint(token)))
+	e.nonTerm.Add(NewTree(token))
 }
 
 // Match matches token with the next token obtained through Next method. In
@@ -102,6 +103,10 @@ func (b *Builder) Match(token Token) (ok bool) {
 	return true
 }
 
+func (b *Builder) Skip() {
+	b.skip = true
+}
+
 // Enter pushes non-terminal on the stack making it the current non-terminal.
 // Subsequent matches, and calls to other non-terminals are added to the current
 // non-terminal until the Exit call. It should be the first statement inside the
@@ -125,20 +130,28 @@ func (b *Builder) Exit(result *bool) {
 		panic("Exit result cannot be nil")
 	}
 	e := b.stack.pop()
-	if *result && b.stack.isEmpty() {
+	resetCurrent := false
+	switch {
+	case b.skip:
+		resetCurrent = true
+		b.skip = false
+	case *result && b.stack.isEmpty():
 		if _, ok := b.next(); ok {
 			b.finalErr = newParsingError("tokens left after parsing")
 		} else {
 			b.finalEle = e
 		}
-	} else if *result {
+	case *result:
 		parent := b.stack.peek()
 		parent.nonTerm.Add(e.nonTerm)
-	} else if b.stack.isEmpty() {
+	case b.stack.isEmpty():
 		// TODO: improve error message
 		b.finalErr = newParsingError("parsing error")
-		b.current = e.index
-	} else {
+		resetCurrent = true
+	default:
+		resetCurrent = true
+	}
+	if resetCurrent {
 		b.current = e.index
 	}
 

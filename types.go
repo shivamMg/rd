@@ -8,11 +8,11 @@ type Token interface{}
 // Tree represents a parse tree node. Symbol is either a terminal or a
 // non-terminal. Subtrees are child nodes of the current node.
 type Tree struct {
-	Symbol   string
+	Symbol   interface{}
 	Subtrees []*Tree
 }
 
-func NewTree(symbol string, subtrees ...*Tree) *Tree {
+func NewTree(symbol interface{}, subtrees ...*Tree) *Tree {
 	t := Tree{Symbol: symbol}
 	for _, subtree := range subtrees {
 		if subtree != nil {

@@ -35,7 +35,7 @@ func ExprPrime(b *rd.Builder) (ok bool) {
 	if b.Match(Minus) {
 		return Expr(b)
 	}
-	b.Add(Epsilon)
+	b.Skip()
 	return true
 }
 
@@ -56,7 +56,7 @@ func TermPrime(b *rd.Builder) (ok bool) {
 	if b.Match(Slash) {
 		return Term(b)
 	}
-	b.Add(Epsilon)
+	b.Skip()
 	return true
 }
 

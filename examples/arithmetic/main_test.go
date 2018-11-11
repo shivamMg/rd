@@ -76,46 +76,34 @@ func TestArithmeticExpressionsGrammar(t *testing.T) {
 
 	expectedParseTree := `Expr
 ├─ Term
-│  ├─ Factor
-│  │  └─ Number
-│  │     └─ 2.8
-│  └─ Term'
-│     └─ ε
+│  └─ Factor
+│     └─ Number
+│        └─ 2.8
 └─ Expr'
    ├─ +
    └─ Expr
-      ├─ Term
-      │  ├─ Factor
-      │  │  ├─ (
-      │  │  ├─ Expr
-      │  │  │  ├─ Term
-      │  │  │  │  ├─ Factor
-      │  │  │  │  │  └─ Number
-      │  │  │  │  │     └─ 3
-      │  │  │  │  └─ Term'
-      │  │  │  │     └─ ε
-      │  │  │  └─ Expr'
-      │  │  │     ├─ -
-      │  │  │     └─ Expr
-      │  │  │        ├─ Term
-      │  │  │        │  ├─ Factor
-      │  │  │        │  │  └─ Number
-      │  │  │        │  │     └─ .733
-      │  │  │        │  └─ Term'
-      │  │  │        │     └─ ε
-      │  │  │        └─ Expr'
-      │  │  │           └─ ε
-      │  │  └─ )
-      │  └─ Term'
-      │     ├─ /
-      │     └─ Term
-      │        ├─ Factor
-      │        │  └─ Number
-      │        │     └─ 23
-      │        └─ Term'
-      │           └─ ε
-      └─ Expr'
-         └─ ε
+      └─ Term
+         ├─ Factor
+         │  ├─ (
+         │  ├─ Expr
+         │  │  ├─ Term
+         │  │  │  └─ Factor
+         │  │  │     └─ Number
+         │  │  │        └─ 3
+         │  │  └─ Expr'
+         │  │     ├─ -
+         │  │     └─ Expr
+         │  │        └─ Term
+         │  │           └─ Factor
+         │  │              └─ Number
+         │  │                 └─ .733
+         │  └─ )
+         └─ Term'
+            ├─ /
+            └─ Term
+               └─ Factor
+                  └─ Number
+                     └─ 23
 `
 	got = parseTree.Sprint()
 	if got != expectedParseTree {
