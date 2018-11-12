@@ -40,12 +40,12 @@ const Grammar = `
 		| "(" expression ")" .
 `
 
-func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree string, err error) {
+func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree *rd.DebugTree, err error) {
 	b := rd.NewBuilder(tokens)
 	if ok := Program(b); !ok {
-		return nil, b.DebugTree().Sprint(), b.Err()
+		return nil, b.DebugTree(), b.Err()
 	}
-	return b.ParseTree(), b.DebugTree().Sprint(), nil
+	return b.ParseTree(), b.DebugTree(), nil
 }
 
 func Program(b *rd.Builder) (ok bool) {
@@ -113,11 +113,10 @@ func Statement(b *rd.Builder) (ok bool) {
 				if b.Match(Semicolon) {
 					continue
 				}
-				break
+				return b.Match(End)
 			}
 			return false
 		}
-		return b.Match(End)
 	case b.Match(If):
 		return Condition(b) && b.Match(Then) && Statement(b)
 	case b.Match(While):
@@ -148,32 +147,26 @@ func Expression(b *rd.Builder) (ok bool) {
 
 	if b.Match(Plus) || b.Match(Minus) {
 	}
-	for {
-		if Term(b) {
-			if b.Match(Plus) || b.Match(Minus) {
-				continue
-			}
-			break
+	for Term(b) {
+		if b.Match(Plus) || b.Match(Minus) {
+			continue
 		}
-		return false
+		return true
 	}
-	return true
+	return false
 }
 
 func Term(b *rd.Builder) (ok bool) {
 	b.Enter("Term")
 	defer b.Exit(&ok)
 
-	for {
-		if Factor(b) {
-			if b.Match(Mul) || b.Match(Div) {
-				continue
-			}
-			break
+	for Factor(b) {
+		if b.Match(Mul) || b.Match(Div) {
+			continue
 		}
-		return false
+		return true
 	}
-	return true
+	return false
 }
 
 func Factor(b *rd.Builder) (ok bool) {
@@ -198,15 +191,13 @@ func Ident(b *rd.Builder) (ok bool) {
 		return false
 	}
 	if _, ok := token.(Token); ok {
-		b.Backtrack()
 		return false
 	}
-	if ok, _ := regexp.MatchString(`[[:alpha:]]`, fmt.Sprint(token)); ok {
-		b.Add(token)
-		return true
+	if ok, _ := regexp.MatchString(`[[:alpha:]]`, fmt.Sprint(token)); !ok {
+		return false
 	}
-	b.Backtrack()
-	return false
+	b.Add(token)
+	return true
 }
 
 func Number(b *rd.Builder) (ok bool) {
@@ -218,13 +209,11 @@ func Number(b *rd.Builder) (ok bool) {
 		return false
 	}
 	if _, ok := token.(Token); ok {
-		b.Backtrack()
 		return false
 	}
-	if ok, _ := regexp.MatchString(`[[:digit:]]`, fmt.Sprint(token)); ok {
-		b.Add(token)
-		return true
+	if ok, _ := regexp.MatchString(`[[:digit:]]`, fmt.Sprint(token)); !ok {
+		return false
 	}
-	b.Backtrack()
-	return false
+	b.Add(token)
+	return true
 }

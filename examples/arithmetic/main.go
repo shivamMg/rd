@@ -9,11 +9,9 @@ import (
 	"github.com/shivamMg/rd/examples/arithmetic/parser"
 )
 
-
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("invalid arguments. pass arithmetic expression as argument")
-		os.Exit(1)
+		printExit("invalid arguments. pass arithmetic expression as argument")
 	}
 
 	expr := strings.Join(os.Args[1:], " ")

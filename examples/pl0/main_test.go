@@ -895,8 +895,8 @@ func TestPrograms(t *testing.T) {
 		if got := parseTree.Sprint(); got != test.expectedParseTree {
 			t.Errorf("invalid parse tree. expected: %s. got: %s.", test.expectedParseTree, got)
 		}
-		if debugTree != test.expectedDebugTree {
-			t.Errorf("invalid debug tree. expected: %s. got: %s.", test.expectedDebugTree, debugTree)
+		if got := debugTree.Sprint(); got != test.expectedDebugTree {
+			t.Errorf("invalid debug tree. expected: %s. got: %s.", test.expectedDebugTree, got)
 		}
 	}
 }

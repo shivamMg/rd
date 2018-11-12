@@ -12,19 +12,16 @@ import (
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("invalid arguments. pass PL/0 program file as an argument")
-		os.Exit(1)
+		printExit("invalid arguments. pass PL/0 program file as an argument")
 	}
 	code, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
-		fmt.Printf("could not open file %q. err: %v", os.Args[1], err)
-		os.Exit(1)
+		printExit("could not open file", os.Args[1], "err:", err)
 	}
 
 	tokens, err := lexer.Lex(string(code))
 	if err != nil {
-		fmt.Println("lexing failed.", err)
-		os.Exit(1)
+		printExit("lexing failed.", err)
 	}
 	fmt.Println("Tokens:", tokens)
 
@@ -32,11 +29,15 @@ func main() {
 
 	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
-		fmt.Println("parsing failed.", err)
-		fmt.Println("debug tree:\n", debugTree)
-		os.Exit(1)
+		fmt.Print("Debug Tree:\n\n", debugTree.Sprint())
+		printExit("parsing failed.", err)
 	}
 
 	fmt.Println("Parse Tree:")
 	parseTree.Print()
+}
+
+func printExit(a ...interface{}) {
+	fmt.Fprintln(os.Stderr, a...)
+	os.Exit(1)
 }

@@ -1,8 +1,9 @@
 package rd
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExit_NilResult(t *testing.T) {
