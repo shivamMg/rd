@@ -5,6 +5,8 @@ import (
 	"log"
 )
 
+// ParsingError is error returned by Builder's Err method in case an error occurs
+// during parsing.
 type ParsingError struct {
 	errString string
 }
@@ -17,14 +19,11 @@ func newParsingError(errString string) *ParsingError {
 	return &ParsingError{errString: errString}
 }
 
-// Builder helps in building a recursive descent parser.
-// It stores a slice of tokens and an index to the current token.
-// It maintains a stack used in building the parse tree (check ParseTree()).
-// It also builds a debug tree that helps in understanding the parsing
-// flow (check DebugTree()).
-// Enter/Exit methods are used in logging enter and exit of non-terminal
-// functions.
-// Add/Next/Match/Backtrack are used while working with terminals.
+// Builder stores details about tokens, index to current token, etc. and provides
+// methods to build recursive descent parsers conveniently. It keeps a track of
+// entry/exit from non-terminal functions, and terminal matches done inside them.
+// Results from non-terminal function calls help create the parse tree. A debug
+// tree is also created to help trace flow across non-terminal functions.
 type Builder struct {
 	tokens         []Token
 	current        int
@@ -36,7 +35,7 @@ type Builder struct {
 	skip           bool
 }
 
-// NewBuilder returns a new Builder for tokens.
+// NewBuilder returns a new Builder for the tokens.
 func NewBuilder(tokens []Token) *Builder {
 	return &Builder{
 		tokens:     tokens,
@@ -46,7 +45,7 @@ func NewBuilder(tokens []Token) *Builder {
 	}
 }
 
-// Next returns the next token and increments the current index. ok is false if
+// Next increments the current index to return the next token. ok is false if
 // no tokens are left, else true.
 func (b *Builder) Next() (token Token, ok bool) {
 	b.mustEnter("Next")
@@ -61,8 +60,9 @@ func (b *Builder) next() (token Token, ok bool) {
 	return b.tokens[b.current], true
 }
 
-// Backtrack resets the current index for the current non-terminal, and discards
-// any matches done inside it.
+// Backtrack resets the current index for the calling non-terminal function, and
+// sets it to the value it was before entering this function. It also discards any
+// matches done inside it.
 func (b *Builder) Backtrack() {
 	b.mustEnter("Backtrack")
 	e := b.stack.peek()
@@ -70,16 +70,19 @@ func (b *Builder) Backtrack() {
 	e.nonTerm.Subtrees = []*Tree{}
 }
 
-// Add adds token as a child subtree of the current non-terminal tree.
+// Add adds token as a symbol in the parse tree. It's added under the current
+// non-terminal subtree.
 func (b *Builder) Add(token Token) {
 	b.mustEnter("Add")
 	e := b.stack.peek()
 	e.nonTerm.Add(NewTree(token))
 }
 
-// Match matches token with the next token obtained through Next method. In
-// case of a non-match the current index is decremented to its original value.
-// ok is false in case of non-match or no-tokens-left, else true for a match.
+// Match matches the next token to token. In case of a non-match the current index
+// is decremented to its original value. ok is false in case of non-match or if no
+// tokens are left, else true for a match. Match calls Next to grab the next token.
+// In case of a match it adds it by calling Add. Debug info is also added to the
+// debug tree.
 func (b *Builder) Match(token Token) (ok bool) {
 	b.mustEnter("Match")
 	debugMsg := ""
@@ -103,14 +106,18 @@ func (b *Builder) Match(token Token) (ok bool) {
 	return true
 }
 
+// Skip removes the current non-terminal from the parse tree regardless of the
+// exit result. It's helpful in case of null productions - where non-terminals
+// don't contribute to the parse tree.
 func (b *Builder) Skip() {
 	b.skip = true
 }
 
-// Enter pushes non-terminal on the stack making it the current non-terminal.
-// Subsequent matches, and calls to other non-terminals are added to the current
-// non-terminal until the Exit call. It should be the first statement inside the
-// non-terminal's function.
+// Enter adds non-terminal to the parse tree making it the current non-terminal.
+// Subsequent terminal matches and calls to non-terminal functions add symbols
+// under this non-terminal.
+//
+// Enter's call should be the first statement inside the non-terminal function.
 func (b *Builder) Enter(nonTerm string) {
 	b.stack.push(ele{
 		index:   b.current,
@@ -119,11 +126,15 @@ func (b *Builder) Enter(nonTerm string) {
 	b.debugStack.push(newDebugTree(nonTerm))
 }
 
-// Exit pops the current non-terminal from the stack. In case of false result
-// the current index is reset to where it was before entering the current
-// non-terminal. In case of true result: 1) the final parse tree is set if the
-// current non-terminal was root 2) else it's added to its parent non-terminal.
-// It should be placed right next to Enter in a defer statement.
+// Exit registers exit from a non-terminal function. result indicates if it had a
+// successful production or not. result must not be nil. In case of a false result
+// or a call to Skip, the current index is reset to where it was before entering
+// the non-terminal. In case of a true result:
+//  1. Parse tree is set (see ParseTree) if the current non-terminal was root.
+//  2. Else it's added as a subtree to its parent non-terminal.
+//
+// The convenient way to call Exit is by using a boolean named return for the
+// non-terminal function, and passing it's address to a deferred Exit.
 func (b *Builder) Exit(result *bool) {
 	b.mustEnter("Exit")
 	if result == nil {
@@ -145,7 +156,7 @@ func (b *Builder) Exit(result *bool) {
 		parent := b.stack.peek()
 		parent.nonTerm.Add(e.nonTerm)
 	case b.stack.isEmpty():
-		// TODO: improve error message
+		// TODO: add additional info to the error message
 		b.finalErr = newParsingError("parsing error")
 		resetCurrent = true
 	default:
@@ -166,21 +177,21 @@ func (b *Builder) Exit(result *bool) {
 }
 
 // ParseTree returns the parse tree. It's set after the root non-terminal exits with
-// true result.
+// true result. Returns nil otherwise.
 func (b *Builder) ParseTree() *Tree {
 	return b.finalEle.nonTerm
 }
 
-// DebugTree returns a tree that includes all matches and non-matches, and
-// non-terminal results (displayed in parentheses) captured throughout parsing.
-// Helps in understanding the parsing flow. It's set after the root non-terminal
-// exits. It has methods Print and Sprint.
+// DebugTree returns the debug tree which includes all matches and non-matches, and
+// non-terminal results (displayed in parentheses) captured throughout parsing. It
+// helps in tracing the parsing flow. It's set after the root non-terminal exits.
+// Returns nil otherwise.
 func (b *Builder) DebugTree() *DebugTree {
 	return b.finalDebugTree
 }
 
-// Err returns the parsing error. It's set after the root non-terminal exits
-// with false result.
+// Err returns the parsing error. It's set after the root non-terminal exits with a
+// false result. Returns nil otherwise.
 func (b *Builder) Err() *ParsingError {
 	return b.finalErr
 }

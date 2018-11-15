@@ -5,8 +5,10 @@ import "github.com/shivamMg/ppds/tree"
 // Token represents a token received after tokenization.
 type Token interface{}
 
-// Tree represents a parse tree node. Symbol is either a terminal or a
-// non-terminal. Subtrees are child nodes of the current node.
+// Tree is a parse tree node. Symbol can either be a terminal (Token) or a non-terminal
+// (see Builder's Enter method). Tokens matched using Builder's Match method or added
+// using Builder's Add method, can be retrieved by type asserting Symbol.
+// Subtrees are child nodes of the current node.
 type Tree struct {
 	Symbol   interface{}
 	Subtrees []*Tree
@@ -61,6 +63,8 @@ func (t *Tree) Print() {
 	tree.PrintHrn(t)
 }
 
+// DebugTree is a debug tree node. Can be printed to help tracing the
+// parsing flow.
 type DebugTree struct {
 	data     string
 	subtrees []*DebugTree
