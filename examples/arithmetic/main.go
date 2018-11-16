@@ -26,10 +26,10 @@ func main() {
 
 	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
-		fmt.Print("Debug Tree:\n\n", debugTree.Sprint())
+		fmt.Print("Debug Tree:\n\n", debugTree)
 		printExit("Parsing failed.", err)
 	}
-	fmt.Print("Parse Tree:\n\n", parseTree.Sprint())
+	fmt.Print("Parse Tree:\n\n", parseTree)
 }
 
 func printTokens(tokens []rd.Token) {

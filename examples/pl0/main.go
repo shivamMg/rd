@@ -29,12 +29,11 @@ func main() {
 
 	parseTree, debugTree, err := parser.Parse(tokens)
 	if err != nil {
-		fmt.Print("Debug Tree:\n\n", debugTree.Sprint())
+		fmt.Print("Debug Tree:\n\n", debugTree)
 		printExit("parsing failed.", err)
 	}
 
-	fmt.Println("Parse Tree:")
-	parseTree.Print()
+	fmt.Print("Parse Tree:\n\n", parseTree)
 }
 
 func printExit(a ...interface{}) {

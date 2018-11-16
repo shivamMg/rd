@@ -53,14 +53,8 @@ func (t *Tree) Detach(subtree *Tree) {
 	}
 }
 
-// Sprint returns formatted tree.
-func (t *Tree) Sprint() string {
+func (t *Tree) String() string {
 	return tree.SprintHrn(t)
-}
-
-// Print prints formatted tree to STDOUT.
-func (t *Tree) Print() {
-	tree.PrintHrn(t)
 }
 
 // DebugTree is a debug tree node. Can be printed to help tracing the
@@ -92,10 +86,6 @@ func (dt *DebugTree) Children() (c []tree.Node) {
 	return
 }
 
-func (dt *DebugTree) Print() {
-	tree.PrintHrn(dt)
-}
-
-func (dt *DebugTree) Sprint() string {
+func (dt *DebugTree) String() string {
 	return tree.SprintHrn(dt)
 }

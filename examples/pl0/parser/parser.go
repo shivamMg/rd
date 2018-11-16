@@ -60,31 +60,29 @@ func Block(b *rd.Builder) (ok bool) {
 	defer b.Exit(&ok)
 
 	if b.Match(Const) {
-		for {
-			if Ident(b) && b.Match(Equal) && Number(b) {
-				if b.Match(Comma) {
-					continue
-				}
-				if b.Match(Semicolon) {
-					break
-				}
+		for Ident(b) && b.Match(Equal) && Number(b) {
+			if b.Match(Comma) {
+				continue
 			}
-			return false
+			if b.Match(Semicolon) {
+				goto varCheck
+			}
 		}
+		return false
 	}
+varCheck:
 	if b.Match(Var) {
-		for {
-			if Ident(b) {
-				if b.Match(Comma) {
-					continue
-				}
-				if b.Match(Semicolon) {
-					break
-				}
+		for Ident(b) {
+			if b.Match(Comma) {
+				continue
 			}
-			return false
+			if b.Match(Semicolon) {
+				goto procedureCheck
+			}
 		}
+		return false
 	}
+procedureCheck:
 	for b.Match(Procedure) {
 		if Ident(b) && b.Match(Semicolon) && Block(b) && b.Match(Semicolon) {
 			continue
@@ -108,15 +106,13 @@ func Statement(b *rd.Builder) (ok bool) {
 	case b.Match(Call):
 		return Ident(b)
 	case b.Match(Begin):
-		for {
-			if Statement(b) {
-				if b.Match(Semicolon) {
-					continue
-				}
-				return b.Match(End)
+		for Statement(b) {
+			if b.Match(Semicolon) {
+				continue
 			}
-			return false
+			return b.Match(End)
 		}
+		return false
 	case b.Match(If):
 		return Condition(b) && b.Match(Then) && Statement(b)
 	case b.Match(While):
