@@ -10,4 +10,6 @@ github.com/shivamMg/rd v0.0.0-20181007100946-15fe3060765c h1:XwH+cbc7YhD2/5QAfkT
 github.com/shivamMg/rd v0.0.0-20181007100946-15fe3060765c/go.mod h1:kZuV3o6ucyjA6h/v1sL6aMZIghsfGIQK9dUI4xaPL7k=
 github.com/shivamMg/rd v0.0.0-20181019212328-4875d2b57c6e h1:CrxAO7/I9oWJZEkeE/BkjUNIdc+amcZEkNlCGp/1/7E=
 github.com/shivamMg/rd v0.0.0-20181019212328-4875d2b57c6e/go.mod h1:JneoUABwp5pIIg7fOhS1sWNSSPjrM7tddQTe1Mf5c78=
+github.com/shivamMg/rd v0.0.0-20181116061043-38a00bee7153 h1:kIWdMg+2z+6HawLNXRUGN6R/dCXyi5YC9Cu3N7PrHpg=
+github.com/shivamMg/rd v0.0.0-20181116061043-38a00bee7153/go.mod h1:JneoUABwp5pIIg7fOhS1sWNSSPjrM7tddQTe1Mf5c78=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
