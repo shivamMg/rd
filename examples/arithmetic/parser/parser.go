@@ -92,7 +92,7 @@ func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree *rd.DebugTree, err 
 	b := rd.NewBuilder(tokens)
 	ok := Expr(b)
 	// it's possible that there are tokens left even after parsing.
-	// in which case ok will be true and b.Err() will not be nil.
+	// in which case ok will be true but b.Err() will not be nil.
 	if ok && b.Err() == nil {
 		return b.ParseTree(), b.DebugTree(), nil
 	}

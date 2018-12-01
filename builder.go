@@ -45,6 +45,45 @@ func NewBuilder(tokens []Token) *Builder {
 	}
 }
 
+// Peek returns the ith token without updating the current index. i must be
+// relative to the current index.
+//
+// ex. if current index points to tkn3:
+//  tokens:           tkn1 tkn2	tkn3 tkn4 tkn5
+//  original indexes:  0    1    2    3    4
+//  relative indexes: -2   -1    0    1    2
+// you can use:
+//  Peek(-2) to get tkn1,
+//  Peek(-1) to get tkn2,
+//  Peek(1) to get tkn4,
+//  Peek(2) to get tkn5.
+//
+// ok is false if i lies outside original index range, else true.
+func (b *Builder) Peek(i int) (token Token, ok bool) {
+	b.mustEnter("Peek")
+	j := b.current + i
+	if j < 0 || j >= len(b.tokens) {
+		return nil, false
+	}
+	return b.tokens[j], true
+}
+
+// Check is a convenience function over Peek. It calls Peek to check if returned
+// token is same as token, and returned ok is true.
+func (b *Builder) Check(token Token, i int) bool {
+	b.mustEnter("Check")
+	peekedToken, ok := b.Peek(i)
+	return peekedToken == token && ok
+}
+
+// CheckOrNotOK is a convenience function over Peek. It calls Peek to check if
+// returned token is same as token, or returned ok is false.
+func (b *Builder) CheckOrNotOK(token Token, i int) bool {
+	b.mustEnter("CheckOrNotOK")
+	peekedToken, ok := b.Peek(i)
+	return peekedToken == token || !ok
+}
+
 // Next increments the current index to return the next token. ok is false if
 // no tokens are left, else true.
 func (b *Builder) Next() (token Token, ok bool) {
@@ -60,9 +99,9 @@ func (b *Builder) next() (token Token, ok bool) {
 	return b.tokens[b.current], true
 }
 
-// Backtrack resets the current index for the calling non-terminal function, and
-// sets it to the value it was before entering this function. It also discards any
-// matches done inside it.
+// Backtrack resets the current index for the non-terminal function it's called inside,
+// and sets it to the value it was before entering this function. It also discards any
+// matches done inside the function.
 func (b *Builder) Backtrack() {
 	b.mustEnter("Backtrack")
 	e := b.stack.peek()
@@ -80,9 +119,10 @@ func (b *Builder) Add(token Token) {
 
 // Match matches the next token to token. In case of a non-match the current index
 // is decremented to its original value. ok is false in case of non-match or if no
-// tokens are left, else true for a match. Match calls Next to grab the next token.
-// In case of a match it adds it by calling Add. Debug info is also added to the
-// debug tree.
+// tokens are left, else true for a match.
+//
+// Internally Match calls Next to grab the next token. In case of a match it adds
+// it by calling Add. Debug info is also added to the debug tree.
 func (b *Builder) Match(token Token) (ok bool) {
 	b.mustEnter("Match")
 	debugMsg := ""
@@ -133,7 +173,7 @@ func (b *Builder) Enter(nonTerm string) {
 //  1. Parse tree is set (see ParseTree) if the current non-terminal was root.
 //  2. Else it's added as a subtree to its parent non-terminal.
 //
-// The convenient way to call Exit is by using a boolean named return for the
+// The convenient way to call Exit is by using a named boolean return for the
 // non-terminal function, and passing it's address to a deferred Exit.
 func (b *Builder) Exit(result *bool) {
 	b.mustEnter("Exit")
@@ -148,7 +188,7 @@ func (b *Builder) Exit(result *bool) {
 		b.skip = false
 	case *result && b.stack.isEmpty():
 		if _, ok := b.next(); ok {
-			b.finalErr = newParsingError("tokens left after parsing")
+			b.finalErr = newParsingError("not all tokens consumed")
 		} else {
 			b.finalEle = e
 		}
