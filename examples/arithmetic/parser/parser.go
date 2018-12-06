@@ -35,8 +35,11 @@ func ExprPrime(b *rd.Builder) (ok bool) {
 	if b.Match(Minus) {
 		return Expr(b)
 	}
-	b.Skip()
-	return true
+	if b.CheckOrNotOK(CloseParen, 1) {
+		b.Skip()
+		return true
+	}
+	return false
 }
 
 func Term(b *rd.Builder) (ok bool) {
@@ -90,10 +93,7 @@ func Number(b *rd.Builder) (ok bool) {
 
 func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree *rd.DebugTree, err error) {
 	b := rd.NewBuilder(tokens)
-	ok := Expr(b)
-	// it's possible that there are tokens left even after parsing.
-	// in which case ok will be true but b.Err() will not be nil.
-	if ok && b.Err() == nil {
+	if ok := Expr(b); ok && b.Err() == nil {
 		return b.ParseTree(), b.DebugTree(), nil
 	}
 	return nil, b.DebugTree(), b.Err()

@@ -79,8 +79,7 @@ func Number(b *rd.Builder) (ok bool) {
 
 func Parse(tokens []rd.Token) (parseTree *rd.Tree, debugTree *rd.DebugTree, err error) {
 	b := rd.NewBuilder(tokens)
-	ok := Expr(b)
-	if ok && b.Err() == nil {
+	if ok := Expr(b); ok && b.Err() == nil {
 		return b.ParseTree(), b.DebugTree(), nil
 	}
 	return nil, b.DebugTree(), b.Err()
