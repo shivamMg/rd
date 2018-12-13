@@ -5,17 +5,25 @@ import (
 	"os"
 	"strings"
 
+	"flag"
+
 	"github.com/shivamMg/rd"
+	"github.com/shivamMg/rd/examples/arithmetic/backtrackingparser"
 	"github.com/shivamMg/rd/examples/arithmetic/parser"
 )
 
+var (
+	useBacktrackingParser = flag.Bool("backtrackingparser", false, "use backtracking parser")
+	expr                  = flag.String("expr", "", "arithmetic expression to be parsed")
+)
+
 func main() {
-	if len(os.Args) < 2 {
-		printExit("invalid arguments. pass arithmetic expression as argument")
+	flag.Parse()
+	if *expr == "" {
+		printExit("empty expr flag. pass arithmetic expression as expr. ex. -expr='1+2'")
 	}
 
-	expr := strings.Join(os.Args[1:], " ")
-	tokens, err := Lex(expr)
+	tokens, err := Lex(*expr)
 	if err != nil {
 		printExit("Lexing failed.", err)
 	}
@@ -24,7 +32,13 @@ func main() {
 	fmt.Print("Grammar:")
 	fmt.Print(parser.Grammar)
 
-	parseTree, debugTree, err := parser.Parse(tokens)
+	var parseTree *rd.Tree
+	var debugTree *rd.DebugTree
+	if *useBacktrackingParser {
+		parseTree, debugTree, err = backtrackingparser.Parse(tokens)
+	} else {
+		parseTree, debugTree, err = parser.Parse(tokens)
+	}
 	if err != nil {
 		fmt.Print("Debug Tree:\n\n", debugTree)
 		printExit("Parsing failed.", err)
