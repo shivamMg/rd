@@ -49,7 +49,7 @@ func NewBuilder(tokens []Token) *Builder {
 // relative to the current index.
 //
 // ex. if current index points to tkn3:
-//  tokens:           tkn1 tkn2	tkn3 tkn4 tkn5
+//  tokens:           tkn1 tkn2 tkn3 tkn4 tkn5
 //  original indexes:  0    1    2    3    4
 //  relative indexes: -2   -1    0    1    2
 // you can use:
@@ -157,13 +157,14 @@ func (b *Builder) Skip() {
 // Subsequent terminal matches and calls to non-terminal functions add symbols
 // under this non-terminal.
 //
-// Enter's call should be the first statement inside the non-terminal function.
-func (b *Builder) Enter(nonTerm string) {
+// Enter should be called right after entering the non-terminal function.
+func (b *Builder) Enter(nonTerm Token) *Builder {
 	b.stack.push(ele{
 		index:   b.current,
 		nonTerm: NewTree(nonTerm),
 	})
-	b.debugStack.push(newDebugTree(nonTerm))
+	b.debugStack.push(newDebugTree(fmt.Sprint(nonTerm)))
+	return b
 }
 
 // Exit registers exit from a non-terminal function. result indicates if it had a

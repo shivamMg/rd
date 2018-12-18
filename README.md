@@ -1,4 +1,4 @@
-## rd
+# rd
 
 `rd` is a small library to build hand-written recursive descent parsers. Besides exposing convenient methods to parse tokens it features automatic parse tree generation and flow tracing for debugging.
 
@@ -9,7 +9,7 @@ A → aB
 B → b
 ```
 
-The parser might look like:
+where `A` and `B` are non-terminals, and `a` and `b` are terminals, a recursive descent parser might look like:
 
 ```go
 func A() bool {
@@ -33,19 +33,20 @@ Parser for the same grammar written using `rd`:
 
 ```go
 func A(b *rd.Builder) (ok bool) {
-	b.Enter("A")
+    b.Enter("A")
 	defer b.Exit(&ok)
+
 	return b.Match("a") && B(b)
 }
 
 func B(b *rd.Builder) (ok bool) {
-	b.Enter("B")
-	defer b.Exit(&ok)
+	defer b.Enter("B").Exit(&ok)
+
 	return b.Match("b")
 }
 ```
 
-You'll notice a builder object has to be passed when calling `A` & `B`. It's used to keep track of entry and exit from non-terminal functions (`A` and `B`), and terminal (`a` & `b`) matches. The exit result (`ok`) determines if the generated subtree for the non-terminal must be added to the parse tree. This subtree is created with terminal matches and calls to other non-terminals done inside the non-terminal.
+`Match` method conveniently resets original state in case of failure terminal matches. `Enter` and `Exit` methods serve the purpose of marking entry and exit respectively from the non-terminal functions. Argument to `Enter`, e.g. `"A"`, is what will show up in the parse tree. The exit result (`&ok`) determines if the generated subtree for the non-terminal must be added to the parse tree. This subtree is created considering successful terminal matches and non-terminals calls done inside the non-terminal.
 
 A debug tree is also generated that contains all non-terminal calls and terminal matches - unlike the parse tree that contains only successful ones. Debug tree is helpful if you want to debug a parsing failure.
 
@@ -86,23 +87,23 @@ A(false)
    └─ c ≠ b
 ```
 
-In the debug tree you can notice terminal matches (successful/failed) and non-terminal exit results.
+In the debug tree you can notice both successful and unsuccessful terminal matches, and non-terminal exit results.
 
 
-### Examples
+## Examples
 
-#### Arithmetic expression parser
+### Arithmetic expression parser
 
 ```bash
-go get github.com/shivamMg/rd/examples/arithmetic   # requires go mod support
+go get github.com/shivamMg/rd/examples/arithmetic   # requires go modules support (go1.11+)
 arithmetic -expr='3.14*4*(6/3)'  # hopefully $GOPATH/bin is in $PATH
 arithmetic -expr='3.14*4*(6/3)' -backtrackingparser
 ```
 
-Parser and grammar can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions but uses backtracking. This can be found inside `examples/arithmetic/backtrackingparser` (notice the use of `b.Backtrack()`. It uses [chroma](https://github.com/alecthomas/chroma) for lexing.
+Parser and grammar can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions. This parser can be found inside `examples/arithmetic/backtrackingparser`. It uses backtracking - notice the use of `b.Backtrack()`. This example uses [chroma](https://github.com/alecthomas/chroma) for lexing.
 
 
-#### PL/0 programming language parser
+### PL/0 programming language parser
 
 ```
 go get github.com/shivamMg/rd/examples/pl0
@@ -114,12 +115,12 @@ pl0 prime.pl0
 
 Parser and grammar can be found inside `examples/pl0/parser`. Grammar has been taken from [en.wikipedia.org/wiki/PL/0#Grammar](https://en.wikipedia.org/wiki/PL/0#Grammar). It also uses chroma for lexing.
 
-#### Domain name parser
+### Domain name parser
 
 ```
 go get github.com/shivamMg/rd/examples/domainname
 domainname www.google.co.uk
 ```
 
-Grammar has been taken from [www.ietf.org/rfc/rfc1035.txt](https://www.ietf.org/rfc/rfc1035.txt) Its lexer is hand-written.
+Grammar has been taken from [www.ietf.org/rfc/rfc1035.txt](https://www.ietf.org/rfc/rfc1035.txt). Its lexer is hand-written.
 

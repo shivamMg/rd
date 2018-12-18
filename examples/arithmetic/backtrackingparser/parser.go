@@ -17,8 +17,7 @@ const Grammar = `
 var numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
 
 func Expr(b *rd.Builder) (ok bool) {
-	b.Enter("Expr")
-	defer b.Exit(&ok)
+	defer b.Enter("Expr").Exit(&ok)
 
 	if Term(b) && b.Match(Plus) && Expr(b) {
 		return true
@@ -32,8 +31,7 @@ func Expr(b *rd.Builder) (ok bool) {
 }
 
 func Term(b *rd.Builder) (ok bool) {
-	b.Enter("Term")
-	defer b.Exit(&ok)
+	defer b.Enter("Term").Exit(&ok)
 
 	if Factor(b) && b.Match(Star) && Term(b) {
 		return true
@@ -47,8 +45,7 @@ func Term(b *rd.Builder) (ok bool) {
 }
 
 func Factor(b *rd.Builder) (ok bool) {
-	b.Enter("Factor")
-	defer b.Exit(&ok)
+	defer b.Enter("Factor").Exit(&ok)
 
 	if b.Match(OpenParen) && Expr(b) && b.Match(CloseParen) {
 		return true
@@ -62,8 +59,7 @@ func Factor(b *rd.Builder) (ok bool) {
 }
 
 func Number(b *rd.Builder) (ok bool) {
-	b.Enter("Number")
-	defer b.Exit(&ok)
+	defer b.Enter("Number").Exit(&ok)
 
 	token, ok := b.Next()
 	if !ok {

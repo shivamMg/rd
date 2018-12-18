@@ -19,15 +19,13 @@ const Grammar = `
 var numberRegex = regexp.MustCompile(`^(\d*\.\d+|\d+)$`)
 
 func Expr(b *rd.Builder) (ok bool) {
-	b.Enter("Expr")
-	defer b.Exit(&ok)
+	defer b.Enter("Expr").Exit(&ok)
 
 	return Term(b) && ExprPrime(b)
 }
 
 func ExprPrime(b *rd.Builder) (ok bool) {
-	b.Enter("Expr'")
-	defer b.Exit(&ok)
+	defer b.Enter("Expr'").Exit(&ok)
 
 	if b.Match(Plus) {
 		return Expr(b)
@@ -43,15 +41,13 @@ func ExprPrime(b *rd.Builder) (ok bool) {
 }
 
 func Term(b *rd.Builder) (ok bool) {
-	b.Enter("Term")
-	defer b.Exit(&ok)
+	defer b.Enter("Term").Exit(&ok)
 
 	return Factor(b) && TermPrime(b)
 }
 
 func TermPrime(b *rd.Builder) (ok bool) {
-	b.Enter("Term'")
-	defer b.Exit(&ok)
+	defer b.Enter("Term'").Exit(&ok)
 
 	if b.Match(Star) {
 		return Term(b)
@@ -64,8 +60,7 @@ func TermPrime(b *rd.Builder) (ok bool) {
 }
 
 func Factor(b *rd.Builder) (ok bool) {
-	b.Enter("Factor")
-	defer b.Exit(&ok)
+	defer b.Enter("Factor").Exit(&ok)
 
 	if b.Match(OpenParen) {
 		return Expr(b) && b.Match(CloseParen)
@@ -77,8 +72,7 @@ func Factor(b *rd.Builder) (ok bool) {
 }
 
 func Number(b *rd.Builder) (ok bool) {
-	b.Enter("Number")
-	defer b.Exit(&ok)
+	defer b.Enter("Number").Exit(&ok)
 
 	token, ok := b.Next()
 	if !ok {
