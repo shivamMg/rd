@@ -1,6 +1,9 @@
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/shivamMg/ppds v0.0.0-20180628070107-c32714a96b1e h1:6TC4+mcfjw9olnx6zfSsq1GA9/MnCuF84vW9MK1PgYs=
 github.com/shivamMg/ppds v0.0.0-20180628070107-c32714a96b1e/go.mod h1:hb39VqUO6qfkb9zBBQPTIV1vWBtI7yQsG0wr3pN78fM=
 github.com/shivamMg/rd v0.0.0-20181206194526-a7fe8c9f63b5 h1:aWs3t5hco+TE+KVYsmSHdHLK4Apu2FcbAtA+vu6+HaE=
 github.com/shivamMg/rd v0.0.0-20181206194526-a7fe8c9f63b5/go.mod h1:JneoUABwp5pIIg7fOhS1sWNSSPjrM7tddQTe1Mf5c78=
+github.com/shivamMg/rd v0.0.0 h1:RpdJI/Aj/2A5fn3ub/Z7JNIXri+lutYFI+XKUS697OQ=
+github.com/shivamMg/rd v0.0.0/go.mod h1:JneoUABwp5pIIg7fOhS1sWNSSPjrM7tddQTe1Mf5c78=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=

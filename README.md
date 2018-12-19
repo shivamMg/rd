@@ -1,15 +1,15 @@
-# rd
+# rd [![godoc](https://godoc.org/github.com/shivammg/rd?status.svg)](https://godoc.org/github.com/shivamMg/rd) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `rd` is a small library to build hand-written recursive descent parsers. Besides exposing convenient methods to parse tokens it features automatic parse tree generation and flow tracing for debugging.
 
-Recursive descent parsers can imitate their grammar quite well. e.g. for the grammar:
+Recursive descent parsers can imitate their grammar quite well. For instance for the following grammar:
 
 ```
 A → aB
 B → b
 ```
 
-where `A` and `B` are non-terminals, and `a` and `b` are terminals, a recursive descent parser might look like:
+(where `A` and `B` are non-terminals, and `a` and `b` are terminals), a recursive descent parser might look like:
 
 ```go
 func A() bool {
@@ -32,35 +32,36 @@ func B() bool {
 Parser for the same grammar written using `rd`:
 
 ```go
+import "github.com/shivamMg/rd"
+
 func A(b *rd.Builder) (ok bool) {
     b.Enter("A")
-	defer b.Exit(&ok)
+    defer b.Exit(&ok)
 
-	return b.Match("a") && B(b)
+    return b.Match("a") && B(b)
 }
 
 func B(b *rd.Builder) (ok bool) {
-	defer b.Enter("B").Exit(&ok)
+    defer b.Enter("B").Exit(&ok)
 
-	return b.Match("b")
+    return b.Match("b")
 }
 ```
 
-`Match` method conveniently resets original state in case of failure terminal matches. `Enter` and `Exit` methods serve the purpose of marking entry and exit respectively from the non-terminal functions. Argument to `Enter`, e.g. `"A"`, is what will show up in the parse tree. The exit result (`&ok`) determines if the generated subtree for the non-terminal must be added to the parse tree. This subtree is created considering successful terminal matches and non-terminals calls done inside the non-terminal.
+A builder object keeps track of the current token and exposes convenient methods to write a parser. `Match`, for instance, resets the original state in case of an unsuccessful match so there's no need for a manual `pushback`. As non-terminal functions are called, terminal matches, and calls to other non-terminal functions are done. A parse tree is maintained in the builder using these matches and calls:
 
-A debug tree is also generated that contains all non-terminal calls and terminal matches - unlike the parse tree that contains only successful ones. Debug tree is helpful if you want to debug a parsing failure.
+In case of a successful match the terminal is added to parse tree under the current non-terminal (the one in which `Match` was called). Same goes in case of a non-terminal function call: the non-terminal, if it exits successfully, is added to parse tree under the current non-terminal. You can imagine this process being repeated recursively.
 
-Both parse trees and debug trees satisfy `fmt.Stringer` and can be pretty printed.
+Argument to `Enter` is what is added to parse tree as a symbol for the non-terminal. Argument to `Exit` determines if function call was successful or not.
+
+`ParseTree` method returns the parse tree which is, well, a tree data structure. It can be pretty-printed.
 
 ```go
 tokens := []rd.Token{"a", "b"}
 b := rd.NewBuilder(tokens)
 if ok := A(b); ok {
-	fmt.Println(b.ParseTree())
-} else {
-	fmt.Println(b.Err())
+    fmt.Print(b.ParseTree())
 }
-fmt.Println(b.DebugTree())
 ```
 
 The above snippet will print:
@@ -70,14 +71,31 @@ A
 ├─ a
 └─ B
    └─ b
+```
 
+A debug tree is also maintained which, unlike the parse tree, contains all matches and calls (not just the successful ones). It's helpful if you want to debug a parsing failure.
+
+```go
+fmt.Print(b.DebugTree())
+```
+
+The above snippet will print:
+
+```
 A(true)
 ├─ a = a
 └─ B(true)
    └─ b = b
 ```
 
-For `tokens := []rd.Token{"a", "c"}` the snippet will print:
+Parsing errors can be retrieved using `Err` method. For `tokens := []rd.Token{"a", "c"}` the following statements:
+
+```go
+fmt.Println(b.Err())
+fmt.Print(b.DebugTree())
+```
+
+will print:
 
 ```
 parsing error
@@ -86,8 +104,6 @@ A(false)
 └─ B(false)
    └─ c ≠ b
 ```
-
-In the debug tree you can notice both successful and unsuccessful terminal matches, and non-terminal exit results.
 
 
 ## Examples
@@ -100,7 +116,7 @@ arithmetic -expr='3.14*4*(6/3)'  # hopefully $GOPATH/bin is in $PATH
 arithmetic -expr='3.14*4*(6/3)' -backtrackingparser
 ```
 
-Parser and grammar can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions. This parser can be found inside `examples/arithmetic/backtrackingparser`. It uses backtracking - notice the use of `b.Backtrack()`. This example uses [chroma](https://github.com/alecthomas/chroma) for lexing.
+Parser and grammar for it can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions. This parser can be found inside `examples/arithmetic/backtrackingparser`. It uses backtracking - notice the use of `b.Backtrack()`. This example uses [chroma](https://github.com/alecthomas/chroma) for lexing.
 
 
 ### PL/0 programming language parser
@@ -123,4 +139,12 @@ domainname www.google.co.uk
 ```
 
 Grammar has been taken from [www.ietf.org/rfc/rfc1035.txt](https://www.ietf.org/rfc/rfc1035.txt). Its lexer is hand-written.
+
+## Licence
+
+MIT
+
+## Contribute
+
+Contribute through bug fixes, improvements, new examples, etc. Lucky PR submitters get to walk home with a brand new CRT and an Audi 1987.
 

@@ -158,7 +158,7 @@ func (b *Builder) Skip() {
 // under this non-terminal.
 //
 // Enter should be called right after entering the non-terminal function.
-func (b *Builder) Enter(nonTerm Token) *Builder {
+func (b *Builder) Enter(nonTerm interface{}) *Builder {
 	b.stack.push(ele{
 		index:   b.current,
 		nonTerm: NewTree(nonTerm),
