@@ -2,7 +2,7 @@
 
 `rd` is a small library to build hand-written recursive descent parsers. Besides exposing convenient methods to parse tokens it features automatic parse tree generation and flow tracing for debugging.
 
-Recursive descent parsers can imitate their grammar quite well. For instance for the following grammar:
+Recursive descent parsers can imitate their grammar quite well. For instance, for the following grammar:
 
 ```
 A → aB
@@ -48,7 +48,7 @@ func B(b *rd.Builder) (ok bool) {
 }
 ```
 
-A builder object keeps track of the current token and exposes convenient methods to write a parser. `Match`, for instance, resets the original state in case of an unsuccessful match so there's no need for a manual `pushback`. As non-terminal functions are called, terminal matches, and calls to other non-terminal functions are done. A parse tree is maintained in the builder using these matches and calls:
+A builder object keeps track of the current token and exposes convenient methods to write a parser. `Match` method, for instance, matches a token to the current token, and resets the original state in case of an unsuccessful match; there's no need for a manual `pushback`. As non-terminal functions are called, terminal matches, and calls to other non-terminal functions are done. A parse tree is generated in the builder object using these matches and calls:
 
 In case of a successful match the terminal is added to parse tree under the current non-terminal (the one in which `Match` was called). Same goes in case of a non-terminal function call: the non-terminal, if it exits successfully, is added to parse tree under the current non-terminal. You can imagine this process being repeated recursively.
 
@@ -73,7 +73,7 @@ A
    └─ b
 ```
 
-A debug tree is also maintained which, unlike the parse tree, contains all matches and calls (not just the successful ones). It's helpful if you want to debug a parsing failure.
+A debug tree is also maintained which, unlike the parse tree, contains all matches and calls (not just the successful ones). It's helpful if you want to debug a parsing failure. It can be retrieved using the `DebugTree` method.
 
 ```go
 fmt.Print(b.DebugTree())
@@ -108,7 +108,7 @@ A(false)
 
 ## Examples
 
-### Arithmetic expression parser
+### [Arithmetic expression parser](examples/arithmetic)
 
 ```bash
 go get github.com/shivamMg/rd/examples/arithmetic   # requires go modules support (go1.11+)
@@ -116,10 +116,12 @@ arithmetic -expr='3.14*4*(6/3)'  # hopefully $GOPATH/bin is in $PATH
 arithmetic -expr='3.14*4*(6/3)' -backtrackingparser
 ```
 
-Parser and grammar for it can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions. This parser can be found inside `examples/arithmetic/backtrackingparser`. It uses backtracking - notice the use of `b.Backtrack()`. This example uses [chroma](https://github.com/alecthomas/chroma) for lexing.
+Parser and grammar for it can be found inside `examples/arithmetic/parser`. There's another parser written for a different grammar that also parses arithmetic expressions. This parser can be found inside `examples/arithmetic/backtrackingparser`. It uses backtracking - notice the use of `b.Backtrack()`.
+
+This example lexer built using [chroma](https://github.com/alecthomas/chroma).
 
 
-### PL/0 programming language parser
+### [PL/0 programming language parser](examples/pl0)
 
 ```
 go get github.com/shivamMg/rd/examples/pl0
@@ -129,16 +131,16 @@ pl0 multiply.pl0
 pl0 prime.pl0
 ```
 
-Parser and grammar can be found inside `examples/pl0/parser`. Grammar has been taken from [en.wikipedia.org/wiki/PL/0#Grammar](https://en.wikipedia.org/wiki/PL/0#Grammar). It also uses chroma for lexing.
+Parser and grammar can be found inside `examples/pl0/parser`. Grammar has been taken from [en.wikipedia.org/wiki/PL/0#Grammar](https://en.wikipedia.org/wiki/PL/0#Grammar). It also uses lexer built using chroma.
 
-### Domain name parser
+### [Domain name parser](examples/domainname)
 
 ```
 go get github.com/shivamMg/rd/examples/domainname
 domainname www.google.co.uk
 ```
 
-Grammar has been taken from [www.ietf.org/rfc/rfc1035.txt](https://www.ietf.org/rfc/rfc1035.txt). Its lexer is hand-written.
+Grammar has been taken from [www.ietf.org/rfc/rfc1035.txt](https://www.ietf.org/rfc/rfc1035.txt). The lexer is hand-written.
 
 ## Licence
 

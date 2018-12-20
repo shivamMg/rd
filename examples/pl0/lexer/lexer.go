@@ -39,8 +39,7 @@ func Lex(code string) ([]rd.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	token := iter()
-	for token != nil {
+	for _, token := range iter.Tokens() {
 		switch token.Type {
 		case chroma.Text:
 		case chroma.Number, chroma.NameVariable:
@@ -54,7 +53,6 @@ func Lex(code string) ([]rd.Token, error) {
 			}
 			tokens = append(tokens, pl0Token)
 		}
-		token = iter()
 	}
 	return tokens, nil
 }
